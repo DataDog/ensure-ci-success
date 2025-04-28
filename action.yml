@@ -5,11 +5,11 @@ inputs:
   github-token:
     description: 'GitHub token to access PR commit statuses and checks'
     required: true
-  initial-wait-seconds:
+  initial-delay-seconds:
     description: 'Number of seconds to sleep before checking CI statuses'
     required: false
     default: '60'
-  retries:
+  max-retries:
     description: 'Number of retries to wait for checks still in progress'
     required: false
     default: '5'

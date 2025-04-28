@@ -8,13 +8,13 @@ async function sleep(seconds) {
 async function run() {
   try {
     const token = core.getInput('github-token', { required: true });
-    const waitSecondsInput = core.getInput('initial-wait-seconds') || '60';
-    const retriesInput = core.getInput('retries') || '5';
-    const pollingIntervalInput = core.getInput('polling-interval') || '60';
+    const initialDelaySecondsInput = core.getInput('initial-delay-seconds') || '60';
+    const maxRetriesInput = core.getInput('max-retries') || '5';
+    const retryIntervalSecondsInput = core.getInput('polling-interval') || '60';
 
-    const waitSeconds = parseInt(waitSecondsInput, 10);
-    const maxRetries = parseInt(retriesInput, 10);
-    const pollingInterval = parseInt(pollingIntervalInput, 10);
+    const initialDelaySeconds = parseInt(initialDelaySecondsInput, 10);
+    const maxRetries = parseInt(maxRetriesInput, 10);
+    const retryIntervalSeconds = parseInt(retryIntervalSecondsInput, 10);
 
     const octokit = github.getOctokit(token);
     const { owner, repo } = github.context.repo;
@@ -27,8 +27,8 @@ async function run() {
 
     const sha = pr.head.sha;
 
-    core.info(`Sleeping for ${waitSeconds} seconds before starting checks...`);
-    await sleep(waitSeconds);
+    core.info(`Sleeping for ${initialDelaySeconds} seconds before starting checks...`);
+    await sleep(initialDelaySeconds);
 
     let retriesLeft = maxRetries;
     while (true) {
@@ -83,9 +83,9 @@ async function run() {
 
       // If still running and retries left
       if (retriesLeft > 0) {
-        core.info(`Some checks are still running. Waiting ${pollingInterval} seconds before retrying... (${retriesLeft} retries left)`);
+        core.info(`Some checks are still running. Waiting ${retryIntervalSeconds} seconds before retrying... (${retriesLeft} retries left)`);
         retriesLeft--;
-        await sleep(pollingInterval);
+        await sleep(retryIntervalSeconds);
       } else {
         core.setFailed('Timed out waiting for CI checks to finish.');
         return;
