@@ -8,11 +8,13 @@ async function sleep(seconds) {
 async function run() {
   try {
     const token = core.getInput('github-token', { required: true });
-    const waitSecondsInput = core.getInput('initial-wait-seconds') || '10';
+    const waitSecondsInput = core.getInput('initial-wait-seconds') || '60';
     const retriesInput = core.getInput('retries') || '5';
+    const pollingIntervalInput = core.getInput('polling-interval') || '60';
 
     const waitSeconds = parseInt(waitSecondsInput, 10);
     const maxRetries = parseInt(retriesInput, 10);
+    const pollingInterval = parseInt(pollingIntervalInput, 10);
 
     const octokit = github.getOctokit(token);
     const { owner, repo } = github.context.repo;
@@ -81,9 +83,9 @@ async function run() {
 
       // If still running and retries left
       if (retriesLeft > 0) {
-        core.info(`Some checks are still running. Waiting ${waitSeconds} seconds before retrying... (${retriesLeft} retries left)`);
+        core.info(`Some checks are still running. Waiting ${pollingInterval} seconds before retrying... (${retriesLeft} retries left)`);
         retriesLeft--;
-        await sleep(waitSeconds);
+        await sleep(pollingInterval);
       } else {
         core.setFailed('Timed out waiting for CI checks to finish.');
         return;
