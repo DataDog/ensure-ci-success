@@ -5,7 +5,7 @@ inputs:
   initial-delay-seconds:
     description: 'Number of seconds to sleep before checking CI statuses'
     required: false
-    default: '60'
+    default: '0'
   max-retries:
     description: 'Number of retries to wait for checks still in progress'
     required: false

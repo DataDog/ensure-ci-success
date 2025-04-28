@@ -8,7 +8,7 @@ async function sleep(seconds) {
 async function run() {
   try {
     const token = core.getInput('github-token', { required: true });
-    const initialDelaySecondsInput = core.getInput('initial-delay-seconds') || '60';
+    const initialDelaySecondsInput = core.getInput('initial-delay-seconds') || '0';
     const maxRetriesInput = core.getInput('max-retries') || '5';
     const retryIntervalSecondsInput = core.getInput('polling-interval') || '60';
 
