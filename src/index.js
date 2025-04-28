@@ -1,11 +1,17 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 
+async function sleep(seconds) {
+  return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+}
+
 async function run() {
   try {
     const token = core.getInput('github-token', { required: true });
-    const octokit = github.getOctokit(token);
+    const waitSecondsInput = core.getInput('initial-wait-seconds') || '10';
+    const waitSeconds = parseInt(waitSecondsInput, 10);
 
+    const octokit = github.getOctokit(token);
     const { owner, repo } = github.context.repo;
     const pr = github.context.payload.pull_request;
 
@@ -16,9 +22,13 @@ async function run() {
 
     const sha = pr.head.sha;
 
+    core.info(`Sleeping for ${waitSeconds} seconds before checking CI statuses...`);
+    await sleep(waitSeconds);
+
     core.info(`Checking CI statuses for commit: ${sha}`);
 
-    // Get check runs
+    // --- (fetch check runs and statuses as before) ---
+
     const { data: checkRunsData } = await octokit.rest.checks.listForRef({
       owner,
       repo,
@@ -27,7 +37,6 @@ async function run() {
 
     const checkRuns = checkRunsData.check_runs || [];
 
-    // Get commit statuses
     const { data: statusData } = await octokit.rest.repos.getCombinedStatusForRef({
       owner,
       repo,
@@ -38,14 +47,12 @@ async function run() {
 
     let failures = [];
 
-    // Analyze check runs
     for (const check of checkRuns) {
       if (check.conclusion !== 'success' && check.conclusion !== 'skipped') {
         failures.push(`❌ Check Run Failed: ${check.name} (conclusion: ${check.conclusion})`);
       }
     }
 
-    // Analyze commit statuses
     for (const status of statuses) {
       if (status.state !== 'success') {
         failures.push(`❌ Commit Status Failed: ${status.context} (state: ${status.state})`);

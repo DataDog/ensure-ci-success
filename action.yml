@@ -5,6 +5,10 @@ inputs:
   github-token:
     description: 'GitHub token to access PR commit statuses and checks'
     required: true
+  initial-wait-seconds:
+    description: 'Number of seconds to sleep before checking CI statuses'
+    required: false
+    default: '10'
 runs:
   using: 'node16'
   main: 'dist/index.js'
