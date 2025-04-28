@@ -4,6 +4,7 @@
   "description": "GitHub Action to ensure all CI checks succeed on a PR.",
   "main": "dist/index.js",
   "scripts": {
+    "prepare": "husky install",
     "build": "ncc build src/index.js -o dist",
     "lint": "eslint src/**/*.js"
   },
@@ -17,6 +18,7 @@
     "@eslint/markdown": "^6.4.0",
     "@vercel/ncc": "^0.36.1",
     "eslint": "^9.25.1",
-    "globals": "^16.0.0"
+    "globals": "^16.0.0",
+    "husky": "^9.1.7"
   }
 }

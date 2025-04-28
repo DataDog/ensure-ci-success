@@ -34499,12 +34499,7 @@ async function sleep(seconds) {
 
 async function run() {
   try {
-    const token = core.getInput('github-token') || process.env.GITHUB_TOKEN;
-    if (!token) {
-      core.setFailed('GitHub token not available. Either pass it via "github-token" input or ensure secrets.GITHUB_TOKEN is available.');
-      return;
-    }
-
+    const token = core.getInput('github-token');
     const initialDelaySecondsInput = core.getInput('initial-delay-seconds') || '60';
     const maxRetriesInput = core.getInput('max-retries') || '5';
     const retryIntervalSecondsInput = core.getInput('polling-interval') || '60';
@@ -34513,7 +34508,7 @@ async function run() {
     const maxRetries = parseInt(maxRetriesInput, 10);
     const retryIntervalSeconds = parseInt(retryIntervalSecondsInput, 10);
 
-    const octokit = github.getOctokit(token);
+    const octokit = token ? github.getOctokit(token) : github.getOctokit();
     const { owner, repo } = github.context.repo;
     const pr = github.context.payload.pull_request;
 
