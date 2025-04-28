@@ -7,7 +7,7 @@ async function sleep(seconds) {
 
 async function run() {
   try {
-    const token = core.getInput('github-token');
+    const token = core.getInput('github-token', { required: true });
     const initialDelaySecondsInput = core.getInput('initial-delay-seconds') || '60';
     const maxRetriesInput = core.getInput('max-retries') || '5';
     const retryIntervalSecondsInput = core.getInput('polling-interval') || '60';
@@ -16,7 +16,7 @@ async function run() {
     const maxRetries = parseInt(maxRetriesInput, 10);
     const retryIntervalSeconds = parseInt(retryIntervalSecondsInput, 10);
 
-    const octokit = token ? github.getOctokit(token) : github.getOctokit();
+    const octokit = github.getOctokit(token);
     const { owner, repo } = github.context.repo;
     const pr = github.context.payload.pull_request;
 

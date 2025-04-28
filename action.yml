@@ -16,7 +16,7 @@ inputs:
     default: '60'
   github-token:
     description: 'GitHub token to access PR commit statuses and checks'
-    required: false
+    required: true
 runs:
   using: 'node16'
   main: 'dist/index.js'
