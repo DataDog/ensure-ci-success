@@ -1,0 +1,13 @@
+name: 'Ensure CI Success'
+description: 'Ensure all CI checks and commit statuses pass on a PR'
+author: 'Charles de Beauchesne'
+inputs:
+  github-token:
+    description: 'GitHub token to access PR commit statuses and checks'
+    required: true
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
+branding:
+  icon: 'check-circle'
+  color: 'green'

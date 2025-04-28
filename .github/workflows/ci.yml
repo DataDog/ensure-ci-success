@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Lint the code
+        run: npm run lint
+
+      - name: Build action
+        run: npm run build
+
+      - name: Validate that dist/ is up-to-date
+        run: |
+          git diff --exit-code dist/ || (echo "::error::dist/ is outdated, please run npm run build and commit the changes." && exit 1)
+
+      - name: Test the action on itself
+        uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
