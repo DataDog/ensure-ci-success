@@ -9,7 +9,10 @@ async function run() {
   try {
     const token = core.getInput('github-token', { required: true });
     const waitSecondsInput = core.getInput('initial-wait-seconds') || '10';
+    const retriesInput = core.getInput('retries') || '5';
+
     const waitSeconds = parseInt(waitSecondsInput, 10);
+    const maxRetries = parseInt(retriesInput, 10);
 
     const octokit = github.getOctokit(token);
     const { owner, repo } = github.context.repo;
@@ -22,47 +25,69 @@ async function run() {
 
     const sha = pr.head.sha;
 
-    core.info(`Sleeping for ${waitSeconds} seconds before checking CI statuses...`);
+    core.info(`Sleeping for ${waitSeconds} seconds before starting checks...`);
     await sleep(waitSeconds);
 
-    core.info(`Checking CI statuses for commit: ${sha}`);
+    let retriesLeft = maxRetries;
+    while (true) {
+      core.info(`Checking CI statuses for commit: ${sha}`);
 
-    // --- (fetch check runs and statuses as before) ---
+      // Fetch check runs
+      const { data: checkRunsData } = await octokit.rest.checks.listForRef({
+        owner,
+        repo,
+        ref: sha,
+      });
+      const checkRuns = checkRunsData.check_runs || [];
 
-    const { data: checkRunsData } = await octokit.rest.checks.listForRef({
-      owner,
-      repo,
-      ref: sha,
-    });
+      // Fetch commit statuses
+      const { data: statusData } = await octokit.rest.repos.getCombinedStatusForRef({
+        owner,
+        repo,
+        ref: sha,
+      });
+      const statuses = statusData.statuses || [];
 
-    const checkRuns = checkRunsData.check_runs || [];
+      let failures = [];
+      let stillRunning = false;
 
-    const { data: statusData } = await octokit.rest.repos.getCombinedStatusForRef({
-      owner,
-      repo,
-      ref: sha,
-    });
-
-    const statuses = statusData.statuses || [];
-
-    let failures = [];
-
-    for (const check of checkRuns) {
-      if (check.conclusion !== 'success' && check.conclusion !== 'skipped') {
-        failures.push(`❌ Check Run Failed: ${check.name} (conclusion: ${check.conclusion})`);
+      // Analyze check runs
+      for (const check of checkRuns) {
+        if (check.status === 'queued' || check.status === 'in_progress') {
+          stillRunning = true;
+        } else if (check.conclusion !== 'success' && check.conclusion !== 'skipped') {
+          failures.push(`❌ Check Run Failed: ${check.name} (conclusion: ${check.conclusion})`);
+        }
       }
-    }
 
-    for (const status of statuses) {
-      if (status.state !== 'success') {
-        failures.push(`❌ Commit Status Failed: ${status.context} (state: ${status.state})`);
+      // Analyze commit statuses
+      for (const status of statuses) {
+        if (status.state === 'pending') {
+          stillRunning = true;
+        } else if (status.state !== 'success') {
+          failures.push(`❌ Commit Status Failed: ${status.context} (state: ${status.state})`);
+        }
       }
-    }
 
-    if (failures.length > 0) {
-      core.setFailed(`Some CI checks or statuses failed:\n${failures.join('\n')}`);
-    } else {
-      core.info('✅ All CI checks and statuses passed or were skipped.');
+      if (failures.length > 0) {
+        core.setFailed(`Some CI checks or statuses failed:\n${failures.join('\n')}`);
+        return;
+      }
+
+      if (!stillRunning) {
+        core.info('✅ All CI checks and statuses passed or were skipped.');
+        return;
+      }
+
+      // If still running and retries left
+      if (retriesLeft > 0) {
+        core.info(`Some checks are still running. Waiting ${waitSeconds} seconds before retrying... (${retriesLeft} retries left)`);
+        retriesLeft--;
+        await sleep(waitSeconds);
+      } else {
+        core.setFailed('Timed out waiting for CI checks to finish.');
+        return;
+      }
     }
 
   } catch (error) {

@@ -9,6 +9,10 @@ inputs:
     description: 'Number of seconds to sleep before checking CI statuses'
     required: false
     default: '10'
+  retries:
+    description: 'Number of retries to wait for checks still in progress'
+    required: false
+    default: '5'
 runs:
   using: 'node16'
   main: 'dist/index.js'
