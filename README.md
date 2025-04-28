@@ -26,6 +26,10 @@ on:
       - synchronize
       - reopened
 
+permissions:
+  checks: read
+  statuses: read
+  
 jobs:
   ensure-ci-success:
     name: Ensure all CI checks passed

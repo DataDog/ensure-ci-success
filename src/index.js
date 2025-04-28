@@ -7,7 +7,12 @@ async function sleep(seconds) {
 
 async function run() {
   try {
-    const token = core.getInput('github-token', { required: true });
+    const token = core.getInput('github-token') || process.env.GITHUB_TOKEN;
+    if (!token) {
+      core.setFailed('GitHub token not available. Either pass it via "github-token" input or ensure secrets.GITHUB_TOKEN is available.');
+      return;
+    }
+
     const initialDelaySecondsInput = core.getInput('initial-delay-seconds') || '60';
     const maxRetriesInput = core.getInput('max-retries') || '5';
     const retryIntervalSecondsInput = core.getInput('polling-interval') || '60';
