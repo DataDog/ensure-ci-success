@@ -31,6 +31,8 @@ async function run() {
     }
 
     const sha = pr.head.sha;
+    const currentWorkflow = github.context.workflow;
+    const currentJob = github.context.job;
 
     core.info(`Sleeping for ${initialDelaySeconds} seconds before starting checks...`);
     await sleep(initialDelaySeconds);
@@ -60,6 +62,10 @@ async function run() {
 
       // Analyze check runs
       for (const check of checkRuns) {
+        if (check.name === currentWorkflow || check.name === currentJob) {
+          core.info(`Skipping current running check: ${check.name}`);
+          continue;  // Skip our own job
+        }
         if (check.status === 'queued' || check.status === 'in_progress') {
           stillRunning = true;
         } else if (check.conclusion !== 'success' && check.conclusion !== 'skipped') {
