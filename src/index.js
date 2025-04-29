@@ -31,6 +31,35 @@ async function writeSummaryTable(rows) {
   await fs.promises.appendFile(summaryPath, fullTable, 'utf8');
 }
 
+async function getAllCombinedStatuses(octokit, { owner, repo, ref }) {
+  // getCombinedStatusForRef does not supports octokit.paginate
+  // so let code it ourselves
+
+  const perPage = 100;
+  let page = 1;
+  let allStatuses = [];
+
+  while (true) {
+    const { data } = await octokit.rest.repos.getCombinedStatusForRef({
+      owner,
+      repo,
+      ref,
+      per_page: perPage,
+      page,
+    });
+
+    allStatuses = allStatuses.concat(data.statuses || []);
+
+    if (data.statuses.length < perPage) {
+      break; // we're on the last page
+    }
+
+    page++;
+  }
+
+  return allStatuses;
+}
+
 async function run() {
   try {
     const token = core.getInput('github-token', { required: true });
@@ -67,23 +96,17 @@ async function run() {
 
     let retriesLeft = maxRetries;
     while (true) {
-      core.info(`Checking CI statuses for commit: ${sha}`);
+      core.info(`\nChecking CI statuses for commit: ${sha}`);
 
-      // Fetch check runs
-      const { data: checkRunsData } = await octokit.rest.checks.listForRef({
+      // Fetch check runs (paginated)
+      const checkRuns = await octokit.paginate(octokit.rest.checks.listForRef, {
         owner,
         repo,
         ref: sha,
       });
-      const checkRuns = checkRunsData.check_runs || [];
 
       // Fetch commit statuses
-      const { data: statusData } = await octokit.rest.repos.getCombinedStatusForRef({
-        owner,
-        repo,
-        ref: sha,
-      });
-      const statuses = statusData.statuses || [];
+      const statuses = await getAllCombinedStatuses(octokit, { owner, repo, ref: sha });
 
       let failures = [];
       let stillRunning = false;
@@ -113,7 +136,7 @@ async function run() {
         }
 
         if (ignoredNameRegexps.some(regex => regex.test(check.name))) {
-          core.info(`Ignoring check run (matched ignore pattern): ${check.name}`);
+          core.info(`Ignoring check run (it matches an ignored pattern): ${check.name}`);
           row.interpreted = '🙈 Ignored';
           continue;
         }
