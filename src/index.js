@@ -91,13 +91,13 @@ async function run() {
     const currentWorkflow = github.context.workflow;
     const currentJob = github.context.job;
 
+    core.info(`Checking CI statuses for commit: ${sha}`);
+
     core.info(`Sleeping for ${initialDelaySeconds} seconds before starting checks...`);
     await sleep(initialDelaySeconds);
 
     let retriesLeft = maxRetries;
     while (true) {
-      core.info(`\nChecking CI statuses for commit: ${sha}`);
-
       // octokit.rest.checks.listForRef does not work here because the token used in CI
       // can prevent access to the checks of the PR commit
       const workflowRuns = await octokit.paginate(octokit.rest.actions.listWorkflowRunsForRepo, {
@@ -155,8 +155,9 @@ async function run() {
         }
 
         if (check.status === 'queued' || check.status === 'in_progress') {
+          core.info(`⏳ ${check.name} is still running (status: ${check.status})`);
           stillRunning = true;
-          row.interpreted = `⏳ ${check.conclusion}`;
+          row.interpreted = `⏳ ${check.status}`;
         } else if (check.conclusion === 'success' || check.conclusion === 'skipped') {
           row.interpreted = `✅ ${check.conclusion}`;
         } else {
@@ -190,6 +191,7 @@ async function run() {
         }
 
         if (status.state === 'pending') {
+          core.info(`⏳ ${status.name} is still running (state: ${status.state})`);
           stillRunning = true;
           row.interpreted = `⏳ ${status.state}`;
         } else if (status.state !== 'success') {
@@ -215,7 +217,7 @@ async function run() {
       // If still running and retries left
       if (retriesLeft > 0) {
         core.info(
-          `Some checks are still running. Waiting ${retryIntervalSeconds} seconds before retrying... (${retriesLeft} retries left)`
+          `Some checks are still running. Waiting ${retryIntervalSeconds} seconds before retrying... (${retriesLeft} retries left)\n`
         );
         retriesLeft--;
         await sleep(retryIntervalSeconds);
