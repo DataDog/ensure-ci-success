@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug GitHub Action",
+      "program": "${workspaceFolder}/src/index.js",
+      "envFile": "${workspaceFolder}/.env.debug",
+      "env": {
+        "GITHUB_EVENT_PATH": "${workspaceFolder}/.vscode/mock-event.json",
+        "GITHUB_REPOSITORY": "DataDog/system-tests",
+        "GITHUB_EVENT_NAME": "pull_request",
+        "GITHUB_REF": "refs/pull/123/merge",
+        "GITHUB_SHA": "1f69224865e3085d258ab1ea3386b01ab6f2e6bc",
+        "INPUT-INITIAL-DELAY-SECONDS": "0",
+        "INPUT-MAX-RETRIES": "5",
+        "INPUT-POLLING-INTERVAL": "10"
+      },
+      "console": "integratedTerminal"
+    }
+  ]
+}

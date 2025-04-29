@@ -34499,12 +34499,6 @@ async function sleep(seconds) {
 }
 
 async function writeSummaryTable(rows) {
-  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
-  if (!summaryPath) {
-    core.info('GITHUB_STEP_SUMMARY not available');
-    return;
-  }
-
   const header =
     '| Check Name | Source | Start Time | Duration | Status | Interpreted as |\n' +
     '|------------|--------|------------|----------|--------|----------------|\n';
@@ -34520,7 +34514,14 @@ async function writeSummaryTable(rows) {
 
   const fullTable = header + markdownRows + '\n';
 
-  await fs.promises.appendFile(summaryPath, fullTable, 'utf8');
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (summaryPath) {
+    await fs.promises.appendFile(summaryPath, fullTable, 'utf8');
+    return;
+  } else {
+    core.info('GITHUB_STEP_SUMMARY not available');
+    core.info(fullTable);
+  }
 }
 
 async function getAllCombinedStatuses(octokit, { owner, repo, ref }) {
@@ -34605,6 +34606,7 @@ async function run() {
       const summaryRows = [];
 
       // Analyze check runs
+      core.info(`Found ${checkRuns.length} check runs`);
       for (const check of checkRuns) {
         const row = {
           name: check.name,
@@ -34645,6 +34647,7 @@ async function run() {
       }
 
       // Analyze commit statuses
+      core.info(`Found ${statuses.length} statuses`);
       for (const status of statuses) {
         const row = {
           name: status.context,
