@@ -34528,26 +34528,25 @@ async function getAllCombinedStatuses(octokit, { owner, repo, ref }) {
   // getCombinedStatusForRef does not supports octokit.paginate
   // so let code it ourselves
 
-  const perPage = 100;
-  let page = 1;
-  let allStatuses = [];
+  const params = {
+    owner,
+    repo,
+    ref,
+    per_page: 100,
+    page: 1,
+  };
+  const allStatuses = [];
 
   while (true) {
-    const { data } = await octokit.rest.repos.getCombinedStatusForRef({
-      owner,
-      repo,
-      ref,
-      per_page: perPage,
-      page,
-    });
+    const { data } = await octokit.rest.repos.getCombinedStatusForRef(params);
 
-    allStatuses = allStatuses.concat(data.statuses || []);
+    allStatuses.push(...(data.statuses || []));
 
-    if (data.statuses.length < perPage) {
+    if (data.statuses.length < params.per_page) {
       break; // we're on the last page
     }
 
-    page++;
+    params.page++;
   }
 
   return allStatuses;
@@ -34591,12 +34590,24 @@ async function run() {
     while (true) {
       core.info(`\nChecking CI statuses for commit: ${sha}`);
 
-      // Fetch check runs (paginated)
-      const checkRuns = await octokit.paginate(octokit.rest.checks.listForRef, {
+      // octokit.rest.checks.listForRef does not work here because the token used in CI
+      // can prevent access to the checks of the PR commit
+      const workflowRuns = await octokit.paginate(octokit.rest.actions.listWorkflowRunsForRepo, {
         owner,
         repo,
-        ref: sha,
+        head_sha: sha,
+        per_page: 100,
       });
+
+      const checkRuns = [];
+      for (const run of workflowRuns) {
+        const jobs = await octokit.paginate(octokit.rest.actions.listJobsForWorkflowRun, {
+          owner,
+          repo,
+          run_id: run.id,
+        });
+        checkRuns.push(...jobs);
+      }
 
       // Fetch commit statuses
       const statuses = await getAllCombinedStatuses(octokit, { owner, repo, ref: sha });
