@@ -10,13 +10,17 @@ inputs:
     description: 'Number of retries to wait for checks still in progress'
     required: false
     default: '5'
-  polling-interval:
+  polling-interval-seconds:
     description: 'Seconds to wait between retries when checks are still running'
     required: false
     default: '60'
+  ignored-name-patterns:
+    description: 'List of job name patterns to exclude from evaluation'
+    required: false
   github-token:
     description: 'GitHub token to access PR commit statuses and checks'
-    required: true
+    required: false
+    default: ${{ github.token }}
 runs:
   using: 'node16'
   main: 'dist/index.js'
