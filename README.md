@@ -37,9 +37,6 @@ jobs:
     steps:
       - name: Run Ensure CI Success
         uses: DataDog/ensure-ci-success@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
 ```
 
 And the only final step is to make this job a requirements for merges using branch protection rules.

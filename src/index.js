@@ -11,10 +11,17 @@ async function run() {
     const initialDelaySecondsInput = core.getInput('initial-delay-seconds') || '0';
     const maxRetriesInput = core.getInput('max-retries') || '5';
     const retryIntervalSecondsInput = core.getInput('polling-interval') || '60';
+    const ignoredNamePatterns = core.getInput('ignored-name-patterns') || '';
 
     const initialDelaySeconds = parseInt(initialDelaySecondsInput, 10);
     const maxRetries = parseInt(maxRetriesInput, 10);
     const retryIntervalSeconds = parseInt(retryIntervalSecondsInput, 10);
+
+    const ignoredNameRegexps = ignoredNamePatterns
+        .split('\n')
+        .map(p => p.trim())
+        .filter(p => p.length > 0)
+        .map(pattern => new RegExp(`^${pattern}$`));
 
     const octokit = github.getOctokit(token);
     const { owner, repo } = github.context.repo;
@@ -61,6 +68,12 @@ async function run() {
           core.info(`Skipping current running check: ${check.name}`);
           continue;  // Skip our own job
         }
+
+        if (ignoredNameRegexps.some(regex => regex.test(check.name))) {
+            core.info(`Ignoring check run (matched ignore pattern): ${check.name}`);
+            continue;
+        }
+        
         if (check.status === 'queued' || check.status === 'in_progress') {
           stillRunning = true;
         } else if (check.conclusion !== 'success' && check.conclusion !== 'skipped') {
@@ -70,6 +83,11 @@ async function run() {
 
       // Analyze commit statuses
       for (const status of statuses) {
+        if (excludePatterns.some(pattern => status.context.includes(pattern))) {
+          core.info(`Excluding commit status: ${status.context}`);
+          continue;
+        }
+
         if (status.state === 'pending') {
           stillRunning = true;
         } else if (status.state !== 'success') {
