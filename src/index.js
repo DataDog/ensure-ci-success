@@ -14,15 +14,15 @@ async function writeSummaryTable(rows) {
   }
 
   const header =
-    '| Check Name | Source | Start Time | Duration | Status |\n' +
-    '|------------|--------|------------|----------|--------|\n';
+    '| Check Name | Source | Start Time | Duration | Status | Interpreted as |\n' +
+    '|------------|--------|------------|----------|--------|----------------|\n';
 
   const markdownRows = rows
     .map(row => {
       const durationSeconds = row.duration != null ? `${Math.round(row.duration)}s` : '-';
       const nameLink = row.url ? `[${row.name}](${row.url})` : row.name;
 
-      return `| ${nameLink} | ${row.source} | ${row.start || '-'} | ${durationSeconds} | ${row.status} |`;
+      return `| ${nameLink} | ${row.source} | ${row.start || '-'} | ${durationSeconds} | ${row.status} | ${row.interpreted} |`;
     })
     .join('\n');
 
