@@ -34490,11 +34490,37 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
+const fs = __nccwpck_require__(7147);
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 
 async function sleep(seconds) {
   return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+}
+
+async function writeSummaryTable(rows) {
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (!summaryPath) {
+    console.warn('GITHUB_STEP_SUMMARY not available');
+    return;
+  }
+
+  const header =
+    '| Check Name | Source | Start Time | Duration | Status |\n' +
+    '|------------|--------|------------|----------|--------|\n';
+
+  const markdownRows = rows
+    .map(row => {
+      const durationSeconds = row.duration != null ? `${Math.round(row.duration)}s` : '-';
+      const nameLink = row.url ? `[${row.name}](${row.url})` : row.name;
+
+      return `| ${nameLink} | ${row.source} | ${row.start || '-'} | ${durationSeconds} | ${row.status} |`;
+    })
+    .join('\n');
+
+  const fullTable = header + markdownRows + '\n';
+
+  await fs.promises.appendFile(summaryPath, fullTable, 'utf8');
 }
 
 async function run() {
@@ -34553,47 +34579,91 @@ async function run() {
 
       let failures = [];
       let stillRunning = false;
+      const summaryRows = [];
 
       // Analyze check runs
       for (const check of checkRuns) {
+        const row = {
+          name: check.name,
+          source: 'check run',
+          status: check.conclusion || check.status,
+          start: check.started_at,
+          duration:
+            check.completed_at && check.started_at
+              ? (new Date(check.completed_at) - new Date(check.started_at)) / 1000
+              : null,
+          url: check.html_url,
+          interpreted: null,
+        };
+
+        summaryRows.push(row);
+
         if (check.name === currentWorkflow || check.name === currentJob) {
           core.info(`Skipping current running check: ${check.name}`);
+          row.interpreted = `🙈 Ignored (current job)`;
           continue; // Skip our own job
         }
 
         if (ignoredNameRegexps.some(regex => regex.test(check.name))) {
           core.info(`Ignoring check run (matched ignore pattern): ${check.name}`);
+          row.interpreted = '🙈 Ignored';
           continue;
         }
 
         if (check.status === 'queued' || check.status === 'in_progress') {
           stillRunning = true;
-        } else if (check.conclusion !== 'success' && check.conclusion !== 'skipped') {
+          row.interpreted = `⏳ ${check.conclusion}`;
+        } else if (check.conclusion === 'success' || check.conclusion === 'skipped') {
+          row.interpreted = `✅ ${check.conclusion}`;
+        } else {
           failures.push(`❌ Check Run Failed: ${check.name} (conclusion: ${check.conclusion})`);
+          row.interpreted = `❌ ${check.conclusion}`;
         }
       }
 
       // Analyze commit statuses
       for (const status of statuses) {
+        const row = {
+          name: status.context,
+          source: 'status',
+          status: status.state,
+          interpreted: null,
+          start: status.created_at,
+          duration:
+            status.updated_at && status.created_at
+              ? (new Date(status.updated_at) - new Date(status.created_at)) / 1000
+              : null,
+          url: status.target_url || null,
+        };
+
+        summaryRows.push(row);
+
         if (ignoredNameRegexps.some(regex => regex.test(status.context))) {
           core.info(`Ignoring check run (matched ignore pattern): ${status.context}`);
+          row.interpreted = '🙈 Ignored';
           continue;
         }
 
         if (status.state === 'pending') {
           stillRunning = true;
+          row.interpreted = `⏳ ${status.state}`;
         } else if (status.state !== 'success') {
+          row.interpreted = `❌ ${status.state}`;
           failures.push(`❌ Commit Status Failed: ${status.context} (state: ${status.state})`);
+        } else {
+          row.interpreted = `✅ ${status.state}`;
         }
       }
 
       if (failures.length > 0) {
         core.setFailed(`Some CI checks or statuses failed:\n${failures.join('\n')}`);
+        await writeSummaryTable(summaryRows);
         return;
       }
 
       if (!stillRunning) {
         core.info('✅ All CI checks and statuses passed or were skipped.');
+        await writeSummaryTable(summaryRows);
         return;
       }
 
@@ -34606,6 +34676,7 @@ async function run() {
         await sleep(retryIntervalSeconds);
       } else {
         core.setFailed('Timed out waiting for CI checks to finish.');
+        await writeSummaryTable(summaryRows);
         return;
       }
     }

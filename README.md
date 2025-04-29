@@ -43,27 +43,25 @@ It's a good practice to set this job as a final job in your pipeline using `need
 
 The final step is to make this job a requirements for merges using branch protection rules.
 
-
 ## Inputs
 
-| Name                        | Default               | Description
-| :---                        | :----------           | :-----:
-| `github-token`              | `${{ github.token }}` | GitHub token to access the API 
-| `ignored-name-patterns`     | (empty)               | List of regular expressions to ignore specific check or status names 
-| `initial-delay-seconds`     | `0`                   | Number of seconds to wait before the first check starts 
-| `max-retries`               | `5`                   | Maximum number of retries while waiting for checks to complete 
-| `polling-interval-seconds`  | `60`                  | Number of seconds to wait between retries 
-
+| Name                       | Default               |                             Description                              |
+| :------------------------- | :-------------------- | :------------------------------------------------------------------: |
+| `github-token`             | `${{ github.token }}` |                    GitHub token to access the API                    |
+| `ignored-name-patterns`    | (empty)               | List of regular expressions to ignore specific check or status names |
+| `initial-delay-seconds`    | `0`                   |       Number of seconds to wait before the first check starts        |
+| `max-retries`              | `5`                   |    Maximum number of retries while waiting for checks to complete    |
+| `polling-interval-seconds` | `60`                  |              Number of seconds to wait between retries               |
 
 ```yml
-    steps:
-      - name: Run Ensure CI Success
-        uses: DataDog/ensure-ci-success@v1
-        with:
-          initial-delay-seconds: 60     # Wait 60 seconds before starting
-          max-retries: 10               # Retries 10 times
-          polling-interval-seconds: 60  # Wait 60s between each try
-          ignored-name-patterns: |
-            some-flaky-job
-            gitlab.*
+steps:
+  - name: Run Ensure CI Success
+    uses: DataDog/ensure-ci-success@v1
+    with:
+      initial-delay-seconds: 60 # Wait 60 seconds before starting
+      max-retries: 10 # Retries 10 times
+      polling-interval-seconds: 60 # Wait 60s between each try
+      ignored-name-patterns: |
+        some-flaky-job
+        gitlab.*
 ```
