@@ -10,7 +10,7 @@ inputs:
     description: 'Number of retries to wait for checks still in progress'
     required: false
     default: '5'
-  polling-interval:
+  polling-interval-seconds:
     description: 'Seconds to wait between retries when checks are still running'
     required: false
     default: '60'
