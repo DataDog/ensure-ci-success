@@ -34501,7 +34501,7 @@ async function sleep(seconds) {
 async function writeSummaryTable(rows) {
   const summaryPath = process.env.GITHUB_STEP_SUMMARY;
   if (!summaryPath) {
-    console.warn('GITHUB_STEP_SUMMARY not available');
+    core.info('GITHUB_STEP_SUMMARY not available');
     return;
   }
 
