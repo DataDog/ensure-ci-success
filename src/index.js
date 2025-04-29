@@ -18,10 +18,10 @@ async function run() {
     const retryIntervalSeconds = parseInt(retryIntervalSecondsInput, 10);
 
     const ignoredNameRegexps = ignoredNamePatterns
-        .split('\n')
-        .map(p => p.trim())
-        .filter(p => p.length > 0)
-        .map(pattern => new RegExp(`^${pattern}$`));
+      .split('\n')
+      .map(p => p.trim())
+      .filter(p => p.length > 0)
+      .map(pattern => new RegExp(`^${pattern}$`));
 
     const octokit = github.getOctokit(token);
     const { owner, repo } = github.context.repo;
@@ -66,14 +66,14 @@ async function run() {
       for (const check of checkRuns) {
         if (check.name === currentWorkflow || check.name === currentJob) {
           core.info(`Skipping current running check: ${check.name}`);
-          continue;  // Skip our own job
+          continue; // Skip our own job
         }
 
         if (ignoredNameRegexps.some(regex => regex.test(check.name))) {
-            core.info(`Ignoring check run (matched ignore pattern): ${check.name}`);
-            continue;
+          core.info(`Ignoring check run (matched ignore pattern): ${check.name}`);
+          continue;
         }
-        
+
         if (check.status === 'queued' || check.status === 'in_progress') {
           stillRunning = true;
         } else if (check.conclusion !== 'success' && check.conclusion !== 'skipped') {
@@ -83,8 +83,8 @@ async function run() {
 
       // Analyze commit statuses
       for (const status of statuses) {
-        if (excludePatterns.some(pattern => status.context.includes(pattern))) {
-          core.info(`Excluding commit status: ${status.context}`);
+        if (ignoredNameRegexps.some(regex => regex.test(status.context))) {
+          core.info(`Ignoring check run (matched ignore pattern): ${status.context}`);
           continue;
         }
 
@@ -107,7 +107,9 @@ async function run() {
 
       // If still running and retries left
       if (retriesLeft > 0) {
-        core.info(`Some checks are still running. Waiting ${retryIntervalSeconds} seconds before retrying... (${retriesLeft} retries left)`);
+        core.info(
+          `Some checks are still running. Waiting ${retryIntervalSeconds} seconds before retrying... (${retriesLeft} retries left)`
+        );
         retriesLeft--;
         await sleep(retryIntervalSeconds);
       } else {
@@ -115,7 +117,6 @@ async function run() {
         return;
       }
     }
-
   } catch (error) {
     core.setFailed(error.message);
   }

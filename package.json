@@ -6,6 +6,8 @@
   "scripts": {
     "prepare": "husky install",
     "build": "ncc build src/index.js -o dist",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint": "eslint src/**/*.js"
   },
   "dependencies": {
@@ -19,6 +21,7 @@
     "@vercel/ncc": "^0.36.1",
     "eslint": "^9.25.1",
     "globals": "^16.0.0",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "prettier": "^3.5.3"
   }
 }
