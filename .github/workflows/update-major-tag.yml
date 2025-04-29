@@ -1,0 +1,44 @@
+name: Update Major Version Tag
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write # Required to push the tag
+
+jobs:
+  update-major-tag:
+    name: Update vX tag to match vX.Y.Z
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Extract major version from tag
+        id: extract
+        run: |
+          TAG_NAME=${{ github.event.release.tag_name }}
+          if [[ "$TAG_NAME" =~ ^v([0-9]+)\.[0-9]+\.[0-9]+$ ]]; then
+            echo "tag_is_valid=true" >> "$GITHUB_OUTPUT"
+            echo "major_tag=v${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag_is_valid=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Exit if tag is not semver vX.Y.Z
+        if: steps.extract.outputs.tag_is_valid != 'true'
+        run: |
+          echo "Not a valid semver release tag (vX.Y.Z). Skipping."
+          exit 0
+
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed to access all tags
+
+      - name: Move major tag to this release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git tag -fa "${{ steps.extract.outputs.major_tag }}" -m "Update major version tag to ${{ github.event.release.tag_name }}"
+          git push origin "refs/tags/${{ steps.extract.outputs.major_tag }}" --force
