@@ -15,6 +15,13 @@ permissions:
   packages: read
 
 jobs:
+  allcheckspassed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: wechuli/allcheckspassed@v1
+        with:
+          checks_exclude: 'build-and-test'
+
   build-and-test:
     runs-on: ubuntu-latest
 
@@ -46,4 +53,5 @@ jobs:
       - name: Test the action on itself
         uses: ./
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          ignored-name-patterns: |
+            allcheckspassed

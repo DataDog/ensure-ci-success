@@ -34583,6 +34583,9 @@ async function run() {
     const currentWorkflow = github.context.workflow;
     const currentJob = github.context.job;
 
+    core.info(`Current workflow: ${currentWorkflow}`);
+    core.info(`Current job: ${currentJob}`);
+
     core.info(`Checking CI statuses for commit: ${sha}`);
 
     core.info(`Sleeping for ${initialDelaySeconds} seconds before starting checks...`);
