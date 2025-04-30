@@ -15,43 +15,14 @@ permissions:
   packages: read
 
 jobs:
-  success:
-    runs-on: ubuntu-latest
-    steps:
-      - run: exit 0
-
-  fail:
-    runs-on: ubuntu-latest
-    steps:
-      - run: exit 1
-
-  parent:
-    runs-on: ubuntu-latest
-    steps:
-      - run: exit 0
-
-  child-success:
-    runs-on: ubuntu-latest
-    needs:
-      - parent
-    steps:
-      - run: exit 0
-
-  child-fail:
-    runs-on: ubuntu-latest
-    needs:
-      - parent
-    steps:
-      - run: exit 1
+  sub-ci:
+    uses: ./.github/workflows/sub-ci.yml
 
   allcheckspassed:
     runs-on: ubuntu-latest
     if: always()
     needs:
-      - success
-      - fail
-      - child-success
-      - child-fail
+      - sub-ci
     steps:
       - uses: wechuli/allcheckspassed@v1
         with:
@@ -61,10 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     needs:
-      - success
-      - fail
-      - child-success
-      - child-fail
+      - sub-ci
 
     steps:
       - name: Checkout code

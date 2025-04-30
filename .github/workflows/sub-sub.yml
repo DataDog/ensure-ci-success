@@ -1,0 +1,14 @@
+name: system-tests
+on:
+  workflow_call:
+
+jobs:
+  child-success:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0
+
+  child-fail:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 1

@@ -1,0 +1,24 @@
+name: system-tests
+on:
+  workflow_call:
+
+jobs:
+  success:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0
+
+  fail:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 1
+
+  parent:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0
+
+  child:
+    uses: ./.github/workflows/sub-sub.yml
+    needs:
+      - parent
