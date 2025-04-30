@@ -20,7 +20,7 @@ jobs:
       - run: exit 0
 
   child:
-    name: "End-to-end #${{ matrix.job }}"
+    name: 'End-to-end #${{ matrix.job }}'
     strategy:
       matrix:
         job:
