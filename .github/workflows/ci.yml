@@ -15,8 +15,42 @@ permissions:
   packages: read
 
 jobs:
+  success:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0
+
+  fail:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 1
+
+  parent:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0
+
+  child-success:
+    runs-on: ubuntu-latest
+    needs:
+      - parent
+    steps:
+      - run: exit 0
+
+  child-fail:
+    runs-on: ubuntu-latest
+    needs:
+      - parent
+    steps:
+      - run: exit 1
+
   allcheckspassed:
     runs-on: ubuntu-latest
+    needs:
+      - success
+      - fail
+      - child-success
+      - child-fail
     steps:
       - uses: wechuli/allcheckspassed@v1
         with:
@@ -24,6 +58,11 @@ jobs:
 
   build-and-test:
     runs-on: ubuntu-latest
+    needs:
+      - success
+      - fail
+      - child-success
+      - child-fail
 
     steps:
       - name: Checkout code

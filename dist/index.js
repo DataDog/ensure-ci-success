@@ -34580,10 +34580,8 @@ async function run() {
     }
 
     const sha = pr.head.sha;
-    const currentWorkflow = github.context.workflow;
     const currentJob = github.context.job;
 
-    core.info(`Current workflow: ${currentWorkflow}`);
     core.info(`Current job: ${currentJob}`);
 
     core.info(`Checking CI statuses for commit: ${sha}`);
@@ -34637,7 +34635,7 @@ async function run() {
 
         summaryRows.push(row);
 
-        if (check.name === currentWorkflow || check.name === currentJob) {
+        if (check.name === currentJob) {
           core.info(`Skipping current running check: ${check.name}`);
           row.interpreted = `🙈 Ignored (current job)`;
           continue; // Skip our own job
