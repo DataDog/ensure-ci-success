@@ -28,14 +28,14 @@ jobs:
 
   child-success:
     runs-on: ubuntu-latest
-    needs: 
+    needs:
       - parent
     steps:
       - run: exit 0
 
   child-fail:
     runs-on: ubuntu-latest
-    needs: 
+    needs:
       - parent
     steps:
       - run: exit 1
