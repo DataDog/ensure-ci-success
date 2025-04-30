@@ -1,14 +1,21 @@
 name: system-tests
 on:
   workflow_call:
+    inputs:
+      name:
+        required: false
+        type: string
+        default: 'sub'
 
 jobs:
   child-success:
+    name: ${{ inputs.weblog }}-success
     runs-on: ubuntu-latest
     steps:
       - run: exit 0
 
   child-fail:
+    name: ${{ inputs.weblog }}-fail
     runs-on: ubuntu-latest
     steps:
       - run: exit 1
