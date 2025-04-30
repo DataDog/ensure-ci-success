@@ -9,13 +9,13 @@ on:
 
 jobs:
   child-success:
-    name: ${{ inputs.weblog }}-success
+    name: ${{ inputs.name }}-success
     runs-on: ubuntu-latest
     steps:
       - run: exit 0
 
   child-fail:
-    name: ${{ inputs.weblog }}-fail
+    name: ${{ inputs.name }}-fail
     runs-on: ubuntu-latest
     steps:
       - run: exit 1
