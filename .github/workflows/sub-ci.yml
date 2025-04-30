@@ -1,0 +1,37 @@
+name: system-tests
+on:
+  workflow_call:
+
+permissions:
+  checks: read
+  statuses: read
+  contents: read
+
+jobs:
+  success:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0
+
+  fail:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 1
+
+  compute-parameters:
+    name: Get parameters
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0
+
+  child:
+    name: 'End-to-end #${{ matrix.job }}'
+    strategy:
+      matrix:
+        job:
+          - 1
+          - 2
+      fail-fast: false
+    uses: ./.github/workflows/sub-sub.yml
+    needs:
+      - compute-parameters

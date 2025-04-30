@@ -15,8 +15,24 @@ permissions:
   packages: read
 
 jobs:
+  # sub-ci:
+  #   uses: ./.github/workflows/sub-ci.yml
+
+  # allcheckspassed:
+  #   runs-on: ubuntu-latest
+  #   if: always()
+  #   needs:
+  #     - sub-ci
+  #   steps:
+  #     - uses: wechuli/allcheckspassed@v1
+  #       with:
+  #         checks_exclude: 'build-and-test'
+
   build-and-test:
     runs-on: ubuntu-latest
+    # if: always()
+    # needs:
+    #   - sub-ci
 
     steps:
       - name: Checkout code
@@ -46,4 +62,5 @@ jobs:
       - name: Test the action on itself
         uses: ./
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          ignored-name-patterns: |
+            allcheckspassed
