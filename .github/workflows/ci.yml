@@ -46,6 +46,7 @@ jobs:
 
   allcheckspassed:
     runs-on: ubuntu-latest
+    if: always()
     needs:
       - success
       - fail
@@ -58,6 +59,7 @@ jobs:
 
   build-and-test:
     runs-on: ubuntu-latest
+    if: always()
     needs:
       - success
       - fail
