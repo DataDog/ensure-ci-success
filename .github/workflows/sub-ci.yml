@@ -20,11 +20,12 @@ jobs:
       - run: exit 0
 
   child:
-    name: "End-to-end #${{ matrix.weblog_instance }}"
+    name: "End-to-end #${{ matrix.job }}"
     strategy:
       matrix:
         job:
-          - weblog_instance: [1, 2]
+          - 1
+          - 2
       fail-fast: false
     uses: ./.github/workflows/sub-sub.yml
     needs:
