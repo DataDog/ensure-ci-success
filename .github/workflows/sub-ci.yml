@@ -13,12 +13,19 @@ jobs:
     steps:
       - run: exit 1
 
-  parent:
+  compute-parameters:
+    name: Get parameters
     runs-on: ubuntu-latest
     steps:
       - run: exit 0
 
   child:
+    name: "End-to-end #${{ matrix.weblog_instance }}"
+    strategy:
+      matrix:
+        job:
+          - weblog_instance: [1, 2]
+      fail-fast: false
     uses: ./.github/workflows/sub-sub.yml
     needs:
-      - parent
+      - compute-parameters
