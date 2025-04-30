@@ -2,6 +2,11 @@ name: system-tests
 on:
   workflow_call:
 
+permissions:
+  checks: read
+  statuses: read
+  contents: read
+
 jobs:
   success:
     runs-on: ubuntu-latest
