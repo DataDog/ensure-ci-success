@@ -29,6 +29,7 @@ jobs:
   #         checks_exclude: 'build-and-test'
 
   build-and-test:
+    name: Build and Test
     runs-on: ubuntu-latest
     # if: always()
     # needs:
@@ -61,6 +62,6 @@ jobs:
 
       - name: Test the action on itself
         uses: ./
-        with:
-          ignored-name-patterns: |
-            allcheckspassed
+        # with:
+        #   ignored-name-patterns: |
+        #     allcheckspassed
