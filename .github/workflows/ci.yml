@@ -61,6 +61,6 @@ jobs:
 
       - name: Test the action on itself
         uses: ./
-        with:
-          ignored-name-patterns: |
-            allcheckspassed
+        # with:
+        #   ignored-name-patterns: |
+        #     allcheckspassed
