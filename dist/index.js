@@ -34582,7 +34582,7 @@ async function run() {
     const sha = pr.head.sha;
     const currentJob = github.context.job;
 
-    core.info(`Current job: ${JSON.stringify(github.context)}`);
+    console.log(`Current job: ${JSON.stringify(github, null, 2)}`);
 
     core.info(`Checking CI statuses for commit: ${sha}`);
 
@@ -34635,7 +34635,7 @@ async function run() {
 
         summaryRows.push(row);
 
-        core.info(`check: ${JSON.stringify(check)}`);
+        console.log(`check: ${JSON.stringify(check, null, 2)}`);
 
         if (check.name === currentJob) {
           core.info(`Skipping current running check: ${check.name}`);
