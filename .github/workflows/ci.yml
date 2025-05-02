@@ -29,7 +29,6 @@ jobs:
   #         checks_exclude: 'build-and-test'
 
   build-and-test:
-    name: Build and Test
     runs-on: ubuntu-latest
     # if: always()
     # needs:

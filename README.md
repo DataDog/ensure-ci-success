@@ -65,3 +65,18 @@ steps:
         some-flaky-job
         gitlab.*
 ```
+
+## Limitations
+
+* Don't set a `name` to the job running this action, github does not offer a reliable way to identify the current job.
+
+----
+
+Note: This project exists to address a [known Github limitation](https://github.com/orgs/community/discussions/26733): by default, GitHub allows pull requests to be merged even when some CI checks fail.
+
+While it's possible to enforce a green CI policy using GitHub's native "required status checks" feature, doing so requires explicitly listing all job names under branch protection rules. This approach has two key drawbacks:
+
+* It does not support optional jobs
+* It introduces ongoing maintenance overhead as the job list evolves
+
+This project provides a flexible and maintainable alternative. Ideally, GitHub will eventually support native enforcement of successful CI completion across all jobs. If and when that happens, this project may become obsolete and will be archived accordingly.
