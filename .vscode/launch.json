@@ -8,6 +8,8 @@
       "program": "${workspaceFolder}/src/index.js",
       "envFile": "${workspaceFolder}/.env.debug",
       "env": {
+        "GITHUB_JOB": "All jobs are green",
+        "GITHUB_RUN_ID": "123456789",
         "GITHUB_EVENT_PATH": "${workspaceFolder}/.vscode/mock-event.json",
         "GITHUB_REPOSITORY": "DataDog/system-tests",
         "GITHUB_EVENT_NAME": "pull_request",

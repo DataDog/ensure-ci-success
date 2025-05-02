@@ -69,6 +69,9 @@ steps:
 ## Limitations
 
 - Don't set a `name` to the job running this action, github does not offer a reliable way to identify the current job.
+- Don't use the same name for another job
+- If for some reason a job starts **after** the current job is finished, it won't be processed. It's a good practice to add some long-running job as a requirement of the job that perform this action. You also may want to set `initial-delay-seconds`.
+  - Turns out that the github API for jobs may have some lags.
 
 ---
 

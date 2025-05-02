@@ -34580,7 +34580,6 @@ async function run() {
     }
 
     const sha = pr.head.sha;
-    const currentRunId = github.context.runId;
     const currentJobName = github.context.job;
 
     core.info(`Checking CI statuses for commit: ${sha}`);
@@ -34590,30 +34589,19 @@ async function run() {
 
     let retriesLeft = maxRetries;
     while (true) {
-      // octokit.rest.checks.listForRef does not work here because the token used in CI
-      // can prevent access to the checks of the PR commit
-      const workflowRuns = await octokit.paginate(octokit.rest.actions.listWorkflowRunsForRepo, {
+      const checkRuns = await octokit.paginate(octokit.rest.checks.listForRef, {
         owner,
         repo,
-        head_sha: sha,
+        ref: sha,
         per_page: 100,
       });
-
-      const checkRuns = [];
-      for (const run of workflowRuns) {
-        const jobs = await octokit.paginate(octokit.rest.actions.listJobsForWorkflowRun, {
-          owner,
-          repo,
-          run_id: run.id,
-        });
-        checkRuns.push(...jobs);
-      }
 
       // Fetch commit statuses
       const statuses = await getAllCombinedStatuses(octokit, { owner, repo, ref: sha });
 
       let failures = [];
       let stillRunning = false;
+      let currentJobIsFound = false;
       const summaryRows = [];
 
       // Analyze check runs
@@ -34634,9 +34622,10 @@ async function run() {
 
         summaryRows.push(row);
 
-        if (check.name === currentJobName && check.run_id === currentRunId) {
+        if (check.name === currentJobName && check.app.slug === 'github-actions') {
           core.info(`Skipping current running check: ${check.name}`);
           row.interpreted = `🙈 Ignored (current job)`;
+          currentJobIsFound = true;
           continue; // Skip our own job
         }
 
@@ -34700,7 +34689,11 @@ async function run() {
         return;
       }
 
-      if (!stillRunning) {
+      if (!currentJobIsFound) {
+        core.warning(
+          '❌ The current job has not been yet reported, very probably caused by some lag on check_runs API.'
+        );
+      } else if (!stillRunning) {
         core.info('✅ All CI checks and statuses passed or were skipped.');
         await writeSummaryTable(summaryRows);
         return;
