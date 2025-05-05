@@ -34639,7 +34639,11 @@ async function run() {
           core.info(`⏳ ${check.name} is still running (status: ${check.status})`);
           stillRunning = true;
           row.interpreted = `⏳ ${check.status}`;
-        } else if (check.conclusion === 'success' || check.conclusion === 'skipped') {
+        } else if (
+          check.conclusion === 'success' ||
+          check.conclusion === 'skipped' ||
+          check.conclusion === 'neutral'
+        ) {
           row.interpreted = `✅ ${check.conclusion}`;
         } else {
           failures.push(`❌ Check Run Failed: ${check.name} (conclusion: ${check.conclusion})`);

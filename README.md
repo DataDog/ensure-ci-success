@@ -32,8 +32,7 @@ permissions:
 
 jobs:
   ensure-ci-success:
-    name: Ensure all CI checks passed
-
+    runs-on: ubuntu-latest
     steps:
       - name: Run Ensure CI Success
         uses: DataDog/ensure-ci-success@v1
