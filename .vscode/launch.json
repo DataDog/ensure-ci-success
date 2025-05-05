@@ -5,8 +5,9 @@
       "type": "node",
       "request": "launch",
       "name": "Debug GitHub Action",
-      "program": "${workspaceFolder}/src/index.js",
+      "program": "${workspaceFolder}/src/index.ts",
       "envFile": "${workspaceFolder}/.env.debug",
+      "runtimeExecutable": "node",
       "env": {
         "GITHUB_JOB": "All jobs are green",
         "GITHUB_RUN_ID": "123456789",
@@ -18,7 +19,9 @@
         "INPUT-MAX-RETRIES": "5",
         "INPUT-POLLING-INTERVAL": "10"
       },
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true
     }
   ]
 }
