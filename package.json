@@ -2,26 +2,42 @@
   "name": "ensure-ci-success",
   "version": "1.0.0",
   "description": "GitHub Action to ensure all CI checks succeed on a PR.",
-  "main": "dist/index.js",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "prepare": "husky install",
-    "build": "ncc build src/index.js -o dist",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "lint": "eslint src/**/*.js"
+    "build": "npm run package",
+    "dev": "ts-node src/index.ts",
+    "format": "npx prettier --write .",
+    "format:check": "npx prettier --check .",
+    "package": "npx rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "lint": "npx eslint ."
   },
   "dependencies": {
-    "@actions/core": "^1.10.0",
-    "@actions/github": "^5.0.3"
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^5.0.3",
+    "@octokit/rest": "^21.1.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.25.1",
-    "@eslint/json": "^0.12.0",
-    "@eslint/markdown": "^6.4.0",
-    "@vercel/ncc": "^0.36.1",
-    "eslint": "^9.25.1",
-    "globals": "^16.0.0",
+    "@eslint/compat": "^1.2.9",
+    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.1",
+    "@types/node": "^20.17.31",
+    "@typescript-eslint/eslint-plugin": "^8.31.0",
+    "eslint-config-prettier": "^10.1.2",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jest": "^28.11.0",
+    "eslint-plugin-prettier": "^5.2.6",
+    "eslint": "^9.26.0",
     "husky": "^9.1.7",
-    "prettier": "^3.5.3"
+    "prettier": "^3.5.3",
+    "rollup": "^4.40.1"
   }
 }
