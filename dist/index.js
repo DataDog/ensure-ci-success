@@ -116215,8 +116215,110 @@ const Octokit = Octokit$1.plugin(requestLog, legacyRestEndpointMethods, paginate
   }
 );
 
+var Interpretation;
+(function (Interpretation) {
+    Interpretation[Interpretation["Success"] = 0] = "Success";
+    Interpretation[Interpretation["Failure"] = 1] = "Failure";
+    Interpretation[Interpretation["Ignored"] = 2] = "Ignored";
+    Interpretation[Interpretation["StillRunning"] = 3] = "StillRunning";
+    Interpretation[Interpretation["CurrentJob"] = 4] = "CurrentJob";
+})(Interpretation || (Interpretation = {}));
+class SummaryRow {
+    name;
+    source;
+    status;
+    interpreted;
+    start;
+    duration;
+    url;
+    constructor(params) {
+        this.name = params.name;
+        this.source = params.source;
+        this.status = params.status;
+        this.interpreted = params.interpreted;
+        this.start = params.start;
+        this.duration = params.duration ?? null;
+        this.url = params.url ?? null;
+    }
+    static fromCheck(check, ignoredNameRegexps, currentJobName) {
+        const duration = check.started_at && check.completed_at
+            ? (new Date(check.completed_at).getTime() - new Date(check.started_at).getTime()) / 1000
+            : null;
+        let interpreted = Interpretation.Failure;
+        const status = check.conclusion ?? check.status ?? 'unknown';
+        if (check.name === currentJobName && check.app?.slug === 'github-actions') {
+            interpreted = Interpretation.CurrentJob;
+        }
+        else if (ignoredNameRegexps.some(regex => regex.test(check.name))) {
+            interpreted = Interpretation.Ignored;
+        }
+        else if (check.status === 'queued' || check.status === 'in_progress') {
+            interpreted = Interpretation.StillRunning;
+        }
+        else if (['success', 'skipped', 'neutral'].includes(check.conclusion || '')) {
+            interpreted = Interpretation.Success;
+        }
+        else {
+            interpreted = Interpretation.Failure;
+        }
+        return new SummaryRow({
+            name: check.name,
+            source: 'check run',
+            status,
+            start: check.started_at ?? undefined,
+            duration,
+            url: check.html_url ?? null,
+            interpreted,
+        });
+    }
+    static fromStatus(status, ignoredNameRegexps) {
+        const duration = status.updated_at && status.created_at
+            ? (new Date(status.updated_at).getTime() - new Date(status.created_at).getTime()) / 1000
+            : null;
+        let interpreted = Interpretation.Failure;
+        if (ignoredNameRegexps.some(regex => regex.test(status.context))) {
+            interpreted = Interpretation.Ignored;
+        }
+        else if (status.state === 'pending') {
+            interpreted = Interpretation.StillRunning;
+        }
+        else if (status.state !== 'success') {
+            interpreted = Interpretation.Failure;
+        }
+        else {
+            interpreted = Interpretation.Success;
+        }
+        const row = new SummaryRow({
+            name: status.context,
+            source: 'status',
+            status: status.state,
+            start: status.created_at,
+            duration,
+            url: status.target_url ?? null,
+            interpreted,
+        });
+        return row;
+    }
+}
+
 async function sleep(seconds) {
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+}
+function fancyInterpretation(interpreted) {
+    switch (interpreted) {
+        case Interpretation.Success:
+            return '✅ All good!';
+        case Interpretation.Failure:
+            return '❌ Something failed.';
+        case Interpretation.StillRunning:
+            return '⏳ Still running...';
+        case Interpretation.CurrentJob:
+            return '🙈 Current job';
+        case Interpretation.Ignored:
+            return '🙈 Ignored';
+        default:
+            return '⚠️ Unknown status';
+    }
 }
 async function writeSummaryTable(rows) {
     const header = '| Check Name | Source | Start Time | Duration | Status | Interpreted as |\n' +
@@ -116225,7 +116327,7 @@ async function writeSummaryTable(rows) {
         .map(row => {
         const durationSeconds = row.duration != null ? `${Math.round(row.duration)}s` : '-';
         const nameLink = row.url ? `[${row.name}](${row.url})` : row.name;
-        return `| ${nameLink} | ${row.source} | ${row.start || '-'} | ${durationSeconds} | ${row.status} | ${row.interpreted} |`;
+        return `| ${nameLink} | ${row.source} | ${row.start || '-'} | ${durationSeconds} | ${row.status} | ${fancyInterpretation(row.interpreted)} |`;
     })
         .join('\n');
     const fullTable = header + markdownRows + '\n';
@@ -116251,6 +116353,27 @@ async function getAllCombinedStatuses(octokit, params) {
     }
     return allStatuses;
 }
+async function getSummaryRows(octokit, sha, ignoredNameRegexps) {
+    const { owner, repo } = githubExports.context.repo;
+    const currentJobName = githubExports.context.job;
+    const checkRuns = await octokit.paginate(octokit.rest.checks.listForRef, {
+        owner,
+        repo,
+        ref: sha,
+        per_page: 100,
+    });
+    coreExports.info(`Found ${checkRuns.length} check runs`);
+    const statuses = await getAllCombinedStatuses(octokit, { owner, repo, ref: sha });
+    coreExports.info(`Found ${statuses.length} commit statuses`);
+    const summaryRows = [];
+    for (const check of checkRuns) {
+        summaryRows.push(SummaryRow.fromCheck(check, ignoredNameRegexps, currentJobName));
+    }
+    for (const status of statuses) {
+        summaryRows.push(SummaryRow.fromStatus(status, ignoredNameRegexps));
+    }
+    return summaryRows;
+}
 async function run() {
     try {
         const token = coreExports.getInput('github-token', { required: true });
@@ -116264,110 +116387,44 @@ async function run() {
             .filter(Boolean)
             .map(pattern => new RegExp(`^${pattern}$`));
         const octokit = new Octokit({ auth: token });
-        const { owner, repo } = githubExports.context.repo;
         const pr = githubExports.context.payload.pull_request;
         if (!pr) {
             coreExports.setFailed('This action must be run on a pull_request event.');
             return;
         }
         const sha = pr.head.sha;
-        const currentJobName = githubExports.context.job;
         coreExports.info(`Checking CI statuses for commit: ${sha}`);
         coreExports.info(`Sleeping for ${initialDelaySeconds} seconds before starting checks...`);
         await sleep(initialDelaySeconds);
         let retriesLeft = maxRetries;
         while (true) {
-            const checkRuns = await octokit.paginate(octokit.rest.checks.listForRef, {
-                owner,
-                repo,
-                ref: sha,
-                per_page: 100,
-            });
-            const statuses = await getAllCombinedStatuses(octokit, { owner, repo, ref: sha });
+            const summaryRows = await getSummaryRows(octokit, sha, ignoredNameRegexps);
             const failures = [];
             let stillRunning = false;
             let currentJobIsFound = false;
-            const summaryRows = [];
-            // Check runs
-            coreExports.info(`Found ${checkRuns.length} check runs`);
-            for (const check of checkRuns) {
-                const row = {
-                    name: check.name,
-                    source: 'check run',
-                    status: check.conclusion || check.status || 'unknown',
-                    interpreted: null,
-                    start: check.started_at || undefined,
-                    duration: check.completed_at && check.started_at
-                        ? (new Date(check.completed_at).getTime() - new Date(check.started_at).getTime()) /
-                            1000
-                        : null,
-                    url: check.html_url || null,
-                };
-                summaryRows.push(row);
-                if (check.name === currentJobName && check.app?.slug === 'github-actions') {
-                    coreExports.info(`Skipping current running check: ${check.name}`);
-                    row.interpreted = `🙈 Ignored (current job)`;
+            for (const row of summaryRows) {
+                if (row.interpreted === Interpretation.CurrentJob) {
+                    coreExports.info(`Skipping current running check: ${row.name}`);
                     currentJobIsFound = true;
-                    continue;
                 }
-                if (ignoredNameRegexps.some(regex => regex.test(check.name))) {
-                    coreExports.info(`Ignoring check run (matched ignore pattern): ${check.name}`);
-                    row.interpreted = '🙈 Ignored';
-                    continue;
+                else if (row.interpreted === Interpretation.Ignored) {
+                    coreExports.info(`Ignoring commit status ${row.name} (matched ignore pattern)`);
                 }
-                if (check.status === 'queued' || check.status === 'in_progress') {
-                    coreExports.info(`⏳ ${check.name} is still running (status: ${check.status})`);
+                else if (row.interpreted === Interpretation.StillRunning) {
+                    coreExports.info(`⏳ ${row.name} is still running (state: ${row.status})`);
                     stillRunning = true;
-                    row.interpreted = `⏳ ${check.status}`;
                 }
-                else if (['success', 'skipped', 'neutral'].includes(check.conclusion || '')) {
-                    row.interpreted = `✅ ${check.conclusion}`;
-                }
-                else {
-                    failures.push(`❌ Check Run Failed: ${check.name} (conclusion: ${check.conclusion})`);
-                    row.interpreted = `❌ ${check.conclusion}`;
-                }
-            }
-            // Commit statuses
-            coreExports.info(`Found ${statuses.length} commit statuses`);
-            for (const status of statuses) {
-                const row = {
-                    name: status.context,
-                    source: 'status',
-                    status: status.state,
-                    interpreted: null,
-                    start: status.created_at,
-                    duration: status.updated_at && status.created_at
-                        ? (new Date(status.updated_at).getTime() - new Date(status.created_at).getTime()) /
-                            1000
-                        : null,
-                    url: status.target_url || null,
-                };
-                summaryRows.push(row);
-                if (ignoredNameRegexps.some(regex => regex.test(status.context))) {
-                    coreExports.info(`Ignoring commit status (matched ignore pattern): ${status.context}`);
-                    row.interpreted = '🙈 Ignored';
-                    continue;
-                }
-                if (status.state === 'pending') {
-                    coreExports.info(`⏳ ${status.context} is still running (state: ${status.state})`);
-                    stillRunning = true;
-                    row.interpreted = `⏳ ${status.state}`;
-                }
-                else if (status.state !== 'success') {
-                    failures.push(`❌ Commit Status Failed: ${status.context} (state: ${status.state})`);
-                    row.interpreted = `❌ ${status.state}`;
-                }
-                else {
-                    row.interpreted = `✅ ${status.state}`;
+                else if (row.interpreted === Interpretation.Failure) {
+                    coreExports.info(`❌ Check Run Failed: ${row.name} (status: ${row.status})`);
+                    failures.push(row);
                 }
             }
             if (failures.length > 0) {
-                coreExports.setFailed(`Some CI checks or statuses failed:\n${failures.join('\n')}`);
+                coreExports.setFailed('Some CI checks or statuses failed, please check the summary table.');
                 await writeSummaryTable(summaryRows);
                 return;
             }
-            if (!currentJobIsFound) {
+            else if (!currentJobIsFound) {
                 coreExports.warning('❌ The current job has not yet been reported — likely caused by check_runs API lag.');
             }
             else if (!stillRunning) {
@@ -116375,15 +116432,15 @@ async function run() {
                 await writeSummaryTable(summaryRows);
                 return;
             }
-            if (retriesLeft > 0) {
-                coreExports.info(`Some checks are still running. Waiting ${retryIntervalSeconds}s before retrying... (${retriesLeft} retries left)`);
-                retriesLeft--;
-                await sleep(retryIntervalSeconds);
-            }
-            else {
+            else if (retriesLeft === 0) {
                 coreExports.setFailed('Timed out waiting for CI checks to finish.');
                 await writeSummaryTable(summaryRows);
                 return;
+            }
+            else {
+                coreExports.info(`Some checks are still running. Waiting ${retryIntervalSeconds}s before retrying... (${retriesLeft} retries left)`);
+                retriesLeft--;
+                await sleep(retryIntervalSeconds);
             }
         }
     }
