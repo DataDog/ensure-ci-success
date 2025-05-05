@@ -131,10 +131,8 @@ async function run(): Promise<void> {
     const sha = pr.head.sha;
 
     core.info(`Checking CI statuses for commit: ${sha}`);
-    core.info(`Sleeping for ${initialDelaySeconds} seconds before starting checks...`);
-    await sleep(initialDelaySeconds);
 
-    let retriesLeft = maxRetries;
+    let currentRetry = 1;
     while (true) {
       const summaryRows = await getSummaryRows(octokit, sha, ignoredNameRegexps);
 
@@ -169,16 +167,20 @@ async function run(): Promise<void> {
         core.info('✅ All CI checks and statuses passed or were skipped.');
         await writeSummaryTable(summaryRows);
         return;
-      } else if (retriesLeft === 0) {
+      } else if (currentRetry === maxRetries) {
         core.setFailed('Timed out waiting for CI checks to finish.');
         await writeSummaryTable(summaryRows);
         return;
       } else {
-        core.info(
-          `Some checks are still running. Waiting ${retryIntervalSeconds}s before retrying... (${retriesLeft} retries left)`
-        );
-        retriesLeft--;
-        await sleep(retryIntervalSeconds);
+        core.info(`Some checks are still running, ${maxRetries - currentRetry} retries left`);
+        if (currentRetry === 1) {
+          core.info(`Waiting ${initialDelaySeconds}s before retrying...`);
+          await sleep(initialDelaySeconds);
+        } else {
+          core.info(`Waiting ${retryIntervalSeconds}s before retrying...`);
+          await sleep(retryIntervalSeconds);
+        }
+        currentRetry++;
       }
     }
   } catch (error) {
