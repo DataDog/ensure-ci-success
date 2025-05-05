@@ -34676,7 +34676,7 @@ async function run() {
         }
 
         if (status.state === 'pending') {
-          core.info(`⏳ ${status.name} is still running (state: ${status.state})`);
+          core.info(`⏳ ${status.context} is still running (state: ${status.state})`);
           stillRunning = true;
           row.interpreted = `⏳ ${status.state}`;
         } else if (status.state !== 'success') {
