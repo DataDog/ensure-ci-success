@@ -16,7 +16,6 @@
     "pretty": true,
     "resolveJsonModule": true,
     "rootDir": "src",
-    "sourceMap": true,
     "strict": true,
     "strictNullChecks": true,
     "target": "ES2022"

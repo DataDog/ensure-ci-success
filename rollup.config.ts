@@ -13,7 +13,7 @@ const config = {
     format: 'es',
     sourcemap: true,
   },
-  plugins: [json(), typescript(), nodeResolve({ preferBuiltins: true }), commonjs()],
+  plugins: [typescript(), json(), nodeResolve({ preferBuiltins: true }), commonjs()],
   onwarn(warning, warn) {
     if (warning.code === 'CIRCULAR_DEPENDENCY') return; // ✅ Suppress safe circular deps
     warn(warning);
