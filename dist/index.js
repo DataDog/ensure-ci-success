@@ -116402,7 +116402,6 @@ class CheckReport {
             if (row.interpreted === Interpretation.CurrentJob) {
                 coreExports.info(`* 🙈 Skipping current running check: ${row.name}`);
                 currentJobIsFound = true;
-                this.stillRunning = true;
             }
             else if (row.interpreted === Interpretation.Ignored) {
                 coreExports.info(`* 🙈 Ignoring ${row.name} (matched ignore pattern)`);
@@ -116418,6 +116417,7 @@ class CheckReport {
         }
         if (!currentJobIsFound) {
             coreExports.warning('⏳ The current job has not yet been reported — likely caused by check_runs API lag.');
+            this.stillRunning = true;
         }
         if (this.containsFailure) {
             coreExports.setFailed('❌ Some CI checks or statuses failed, please check the summary table.');
