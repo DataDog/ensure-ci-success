@@ -116367,7 +116367,7 @@ async function getSummaryRows(octokit, sha, ignoredNameRegexps) {
         if (suite.latest_check_runs_count === 0) {
             coreExports.debug(`Check suite ${suite.id} has no check runs (${suite.url}`);
         }
-        else if (suite.conclusion === null ||
+        else if (suite.conclusion !== null &&
             ['success', 'neutral', 'skipped'].includes(suite.conclusion)) {
             coreExports.info(`Check suite ${suite.id} conclusion is ${suite.conclusion} (${suite.latest_check_runs_count} runs) (${suite.url})`);
         }

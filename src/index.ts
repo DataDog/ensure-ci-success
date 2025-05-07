@@ -95,7 +95,7 @@ async function getSummaryRows(
     if (suite.latest_check_runs_count === 0) {
       core.debug(`Check suite ${suite.id} has no check runs (${suite.url}`);
     } else if (
-      suite.conclusion === null ||
+      suite.conclusion !== null &&
       ['success', 'neutral', 'skipped'].includes(suite.conclusion)
     ) {
       core.info(
