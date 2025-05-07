@@ -51,7 +51,7 @@ async function run(): Promise<void> {
 
     while (report.shouldRetry && currentRetry <= maxRetries) {
       const delay = currentRetry === 1 ? initialDelaySeconds : retryIntervalSeconds;
-      core.info(`Waiting ${delay}s before retrying (${maxRetries - currentRetry} retries left).`);
+      core.info(`Waiting ${delay}s (${maxRetries - currentRetry + 1} retries left).`);
       await sleep(delay);
       await report.fill(octokit);
 

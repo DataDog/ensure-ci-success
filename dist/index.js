@@ -116485,7 +116485,7 @@ async function run() {
         let currentRetry = 1;
         while (report.shouldRetry && currentRetry <= maxRetries) {
             const delay = currentRetry === 1 ? initialDelaySeconds : retryIntervalSeconds;
-            coreExports.info(`Waiting ${delay}s before retrying (${maxRetries - currentRetry} retries left).`);
+            coreExports.info(`Waiting ${delay}s (${maxRetries - currentRetry + 1} retries left).`);
             await sleep(delay);
             await report.fill(octokit);
             currentRetry++;
