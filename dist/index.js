@@ -116484,14 +116484,9 @@ async function run() {
         }
         let currentRetry = 1;
         while (report.shouldRetry && currentRetry <= maxRetries) {
-            if (currentRetry === 1) {
-                coreExports.info(`Waiting ${initialDelaySeconds}s before checking CI statuses.`);
-                await sleep(initialDelaySeconds);
-            }
-            else {
-                coreExports.info(`Waiting ${retryIntervalSeconds}s before retrying (${maxRetries - currentRetry} retries left).`);
-                await sleep(retryIntervalSeconds);
-            }
+            const delay = currentRetry === 1 ? initialDelaySeconds : retryIntervalSeconds;
+            coreExports.info(`Waiting ${delay}s before retrying (${maxRetries - currentRetry} retries left).`);
+            await sleep(delay);
             await report.fill(octokit);
             currentRetry++;
         }
