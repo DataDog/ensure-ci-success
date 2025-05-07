@@ -131,6 +131,67 @@ async function getSummaryRows(
   return summaryRows;
 }
 
+async function performCheckLoop(
+  octokit: Octokit,
+  sha: string,
+  ignoredNameRegexps: RegExp[],
+  maxRetries: number,
+  retryIntervalSeconds: number
+): Promise<SummaryRow[]> {
+  let currentRetry = 1;
+  let summaryRows: SummaryRow[];
+
+  core.info(`Checking CI statuses for commit: ${sha}`);
+
+  while (true) {
+    summaryRows = await getSummaryRows(octokit, sha, ignoredNameRegexps);
+
+    const failures: SummaryRow[] = [];
+    let stillRunning = false;
+    let currentJobIsFound = false;
+
+    for (const row of summaryRows) {
+      if (row.interpreted === Interpretation.CurrentJob) {
+        core.info(`Skipping current running check: ${row.name}`);
+        currentJobIsFound = true;
+      } else if (row.interpreted === Interpretation.Ignored) {
+        core.info(`Ignoring commit status ${row.name} (matched ignore pattern)`);
+      } else if (row.interpreted === Interpretation.StillRunning) {
+        core.info(`⏳ ${row.name} is still running (state: ${row.status})`);
+        stillRunning = true;
+      } else if (row.interpreted === Interpretation.Failure) {
+        core.info(`❌ Check Run Failed: ${row.name} (status: ${row.status})`);
+        failures.push(row);
+      }
+    }
+
+    if (!currentJobIsFound) {
+      core.warning(
+        '❌ The current job has not yet been reported — likely caused by check_runs API lag.'
+      );
+    }
+
+    if (failures.length > 0) {
+      core.setFailed('Some CI checks or statuses failed, please check the summary table.');
+      break;
+    } else if (!stillRunning && currentJobIsFound) {
+      core.info('✅ All CI checks and statuses passed or were skipped.');
+      break;
+    } else if (currentRetry === maxRetries) {
+      core.setFailed('Timed out waiting for CI checks to finish.');
+      break;
+    } else {
+      core.info(
+        `Some checks are still running, waiting ${retryIntervalSeconds}s before retrying (${maxRetries - currentRetry} retries left).`
+      );
+      await sleep(retryIntervalSeconds);
+      currentRetry++;
+    }
+  }
+
+  return summaryRows;
+}
+
 async function run(): Promise<void> {
   try {
     const token = core.getInput('github-token', { required: true });
@@ -146,6 +207,7 @@ async function run(): Promise<void> {
       .map(pattern => new RegExp(`^${pattern}$`));
 
     const octokit = new Octokit({ auth: token });
+    const { owner, repo } = github.context.repo;
     const pr = github.context.payload.pull_request;
 
     if (!pr) {
@@ -153,61 +215,30 @@ async function run(): Promise<void> {
       return;
     }
 
-    const sha = pr.head.sha;
+    const { data: run } = await octokit.rest.actions.getWorkflowRun({
+      owner,
+      repo,
+      run_id: github.context.runId,
+    });
 
-    core.info(`Checking CI statuses for commit: ${sha}`);
-
-    let currentRetry = 1;
-    while (true) {
-      const summaryRows = await getSummaryRows(octokit, sha, ignoredNameRegexps);
-
-      const failures: SummaryRow[] = [];
-      let stillRunning = false;
-      let currentJobIsFound = false;
-
-      for (const row of summaryRows) {
-        if (row.interpreted === Interpretation.CurrentJob) {
-          core.info(`Skipping current running check: ${row.name}`);
-          currentJobIsFound = true;
-        } else if (row.interpreted === Interpretation.Ignored) {
-          core.info(`Ignoring commit status ${row.name} (matched ignore pattern)`);
-        } else if (row.interpreted === Interpretation.StillRunning) {
-          core.info(`⏳ ${row.name} is still running (state: ${row.status})`);
-          stillRunning = true;
-        } else if (row.interpreted === Interpretation.Failure) {
-          core.info(`❌ Check Run Failed: ${row.name} (status: ${row.status})`);
-          failures.push(row);
-        }
-      }
-
-      if (failures.length > 0) {
-        core.setFailed('Some CI checks or statuses failed, please check the summary table.');
-        await writeSummaryTable(summaryRows);
-        return;
-      } else if (!currentJobIsFound) {
-        core.warning(
-          '❌ The current job has not yet been reported — likely caused by check_runs API lag.'
-        );
-      } else if (!stillRunning) {
-        core.info('✅ All CI checks and statuses passed or were skipped.');
-        await writeSummaryTable(summaryRows);
-        return;
-      } else if (currentRetry === maxRetries) {
-        core.setFailed('Timed out waiting for CI checks to finish.');
-        await writeSummaryTable(summaryRows);
-        return;
-      } else {
-        core.info(`Some checks are still running, ${maxRetries - currentRetry} retries left`);
-        if (currentRetry === 1) {
-          core.info(`Waiting ${initialDelaySeconds}s before retrying...`);
-          await sleep(initialDelaySeconds);
-        } else {
-          core.info(`Waiting ${retryIntervalSeconds}s before retrying...`);
-          await sleep(retryIntervalSeconds);
-        }
-        currentRetry++;
-      }
+    if (run.run_attempt === 1) {
+      core.info(
+        `This is the first run of the workflow, waiting ${initialDelaySeconds}s before checking CI statuses.`
+      );
+      await sleep(initialDelaySeconds);
+    } else {
+      core.info('This is not the first run of the workflow, skipping initial delay.');
     }
+
+    const summaryRows = await performCheckLoop(
+      octokit,
+      pr.head.sha,
+      ignoredNameRegexps,
+      maxRetries,
+      retryIntervalSeconds
+    );
+
+    await writeSummaryTable(summaryRows);
   } catch (error) {
     core.setFailed((error as Error).message);
   }
