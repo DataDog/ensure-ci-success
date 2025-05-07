@@ -1,7 +1,7 @@
-import * as require$$1$1 from 'fs';
-import require$$1__default from 'fs';
 import require$$0 from 'os';
 import require$$0$1 from 'crypto';
+import * as require$$1$1 from 'fs';
+import require$$1__default from 'fs';
 import require$$1$5 from 'path';
 import require$$2$1 from 'http';
 import require$$3$1 from 'https';
@@ -116301,8 +116301,18 @@ class SummaryRow {
     }
 }
 
-async function sleep(seconds) {
-    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+async function getAllCombinedStatuses(octokit, params) {
+    const allStatuses = [];
+    const pagedParams = { ...params, per_page: 100, page: 1 };
+    while (true) {
+        const { data } = await octokit.rest.repos.getCombinedStatusForRef(pagedParams);
+        allStatuses.push(...data.statuses);
+        if (data.statuses.length < pagedParams.per_page) {
+            break;
+        }
+        pagedParams.page++;
+    }
+    return allStatuses;
 }
 function fancyInterpretation(interpreted) {
     switch (interpreted) {
@@ -116320,154 +116330,172 @@ function fancyInterpretation(interpreted) {
             return '⚠️ Unknown status';
     }
 }
-async function writeSummaryTable(rows) {
-    const header = '| Check Name | Source | Start Time | Duration | Status | Interpreted as |\n' +
-        '|------------|--------|------------|----------|--------|----------------|\n';
-    const markdownRows = rows
-        .map(row => {
-        const durationSeconds = row.duration != null ? `${Math.round(row.duration)}s` : '-';
-        const nameLink = row.url ? `[${row.name}](${row.url})` : row.name;
-        return `| ${nameLink} | ${row.source} | ${row.start || '-'} | ${durationSeconds} | ${row.status} | ${fancyInterpretation(row.interpreted)} |`;
-    })
-        .join('\n');
-    const fullTable = header + markdownRows + '\n';
-    const summaryPath = process.env.GITHUB_STEP_SUMMARY;
-    if (summaryPath) {
-        await require$$1$1.promises.appendFile(summaryPath, fullTable, 'utf8');
-    }
-    else {
-        coreExports.info('GITHUB_STEP_SUMMARY not available');
-        coreExports.info(fullTable);
-    }
-}
-async function getAllCombinedStatuses(octokit, params) {
-    const allStatuses = [];
-    const pagedParams = { ...params, per_page: 100, page: 1 };
-    while (true) {
-        const { data } = await octokit.rest.repos.getCombinedStatusForRef(pagedParams);
-        allStatuses.push(...data.statuses);
-        if (data.statuses.length < pagedParams.per_page) {
-            break;
-        }
-        pagedParams.page++;
-    }
-    return allStatuses;
-}
-async function getSummaryRows(octokit, sha, ignoredNameRegexps) {
-    const { owner, repo } = githubExports.context.repo;
-    const currentJobName = githubExports.context.job;
-    const checkSuites = await octokit.paginate(octokit.rest.checks.listSuitesForRef, {
-        owner,
-        repo,
-        ref: sha,
-        per_page: 100,
-    });
-    const checkRuns = [];
-    for (const suite of checkSuites) {
-        if (suite.latest_check_runs_count === 0) {
-            coreExports.debug(`Check suite ${suite.id} has no check runs (${suite.url}`);
-        }
-        else if (suite.conclusion !== null &&
-            ['success', 'neutral', 'skipped'].includes(suite.conclusion)) {
-            coreExports.info(`Check suite ${suite.id} conclusion is ${suite.conclusion} (${suite.latest_check_runs_count} runs) (${suite.url})`);
-        }
-        else {
-            coreExports.info(`Get ${suite.latest_check_runs_count} runs for check suite ${suite.url}`);
-            const subCheckRuns = await octokit.paginate(octokit.rest.checks.listForSuite, {
-                owner,
-                repo,
-                check_suite_id: suite.id,
-                per_page: 100,
-            });
-            checkRuns.push(...subCheckRuns);
-        }
-    }
-    coreExports.info(`Found ${checkRuns.length} check runs`);
-    const statuses = await getAllCombinedStatuses(octokit, { owner, repo, ref: sha });
-    coreExports.info(`Found ${statuses.length} commit statuses`);
-    const summaryRows = [];
-    for (const check of checkRuns) {
-        summaryRows.push(SummaryRow.fromCheck(check, ignoredNameRegexps, currentJobName));
-    }
-    for (const status of statuses) {
-        summaryRows.push(SummaryRow.fromStatus(status, ignoredNameRegexps));
-    }
-    return summaryRows;
-}
-async function run() {
-    try {
-        const token = coreExports.getInput('github-token', { required: true });
-        const initialDelaySeconds = parseInt(coreExports.getInput('initial-delay-seconds') || '0', 10);
-        const maxRetries = parseInt(coreExports.getInput('max-retries') || '5', 10);
-        const retryIntervalSeconds = parseInt(coreExports.getInput('polling-interval') || '60', 10);
-        const ignoredNamePatterns = coreExports.getInput('ignored-name-patterns') || '';
-        const ignoredNameRegexps = ignoredNamePatterns
+class CheckReport {
+    owner;
+    repo;
+    sha;
+    ignoredNameRegexps;
+    currentJobName;
+    items = [];
+    containsFailure = false;
+    stillRunning = false;
+    shouldRetry = true;
+    constructor(owner, repo, sha, ignoredNamePatterns, currentJobName) {
+        this.owner = owner;
+        this.repo = repo;
+        this.sha = sha;
+        this.ignoredNameRegexps = ignoredNamePatterns
             .split('\n')
             .map(p => p.trim())
             .filter(Boolean)
             .map(pattern => new RegExp(`^${pattern}$`));
+        this.currentJobName = currentJobName;
+    }
+    async fill(octokit) {
+        this.items.length = 0; // Clear the array
+        const checkSuites = await octokit.paginate(octokit.rest.checks.listSuitesForRef, {
+            owner: this.owner,
+            repo: this.repo,
+            ref: this.sha,
+            per_page: 100,
+        });
+        const checkRuns = [];
+        for (const suite of checkSuites) {
+            if (suite.latest_check_runs_count === 0) {
+                coreExports.debug(`Check suite ${suite.id} has no check runs (${suite.url}`);
+            }
+            else if (suite.conclusion !== null &&
+                ['success', 'neutral', 'skipped'].includes(suite.conclusion)) {
+                coreExports.info(`Check suite ${suite.id} conclusion is ${suite.conclusion} (${suite.latest_check_runs_count} runs) (${suite.url})`);
+            }
+            else {
+                coreExports.info(`Get ${suite.latest_check_runs_count} runs for check suite ${suite.url}`);
+                const subCheckRuns = await octokit.paginate(octokit.rest.checks.listForSuite, {
+                    owner: this.owner,
+                    repo: this.repo,
+                    check_suite_id: suite.id,
+                    per_page: 100,
+                });
+                checkRuns.push(...subCheckRuns);
+            }
+        }
+        coreExports.info(`Found ${checkRuns.length} check runs`);
+        const statuses = await getAllCombinedStatuses(octokit, {
+            owner: this.owner,
+            repo: this.repo,
+            ref: this.sha,
+        });
+        coreExports.info(`Found ${statuses.length} commit statuses`);
+        for (const check of checkRuns) {
+            this.items.push(SummaryRow.fromCheck(check, this.ignoredNameRegexps, this.currentJobName));
+        }
+        for (const status of statuses) {
+            this.items.push(SummaryRow.fromStatus(status, this.ignoredNameRegexps));
+        }
+        this.compute();
+    }
+    compute() {
+        this.containsFailure = false;
+        this.stillRunning = false;
+        let currentJobIsFound = false;
+        for (const row of this.items) {
+            if (row.interpreted === Interpretation.CurrentJob) {
+                coreExports.info(`* 🙈 Skipping current running check: ${row.name}`);
+                currentJobIsFound = true;
+            }
+            else if (row.interpreted === Interpretation.Ignored) {
+                coreExports.info(`* 🙈 Ignoring ${row.name} (matched ignore pattern)`);
+            }
+            else if (row.interpreted === Interpretation.StillRunning) {
+                coreExports.info(`* ⏳ ${row.name} is still running (state: ${row.status})`);
+                this.stillRunning = true;
+            }
+            else if (row.interpreted === Interpretation.Failure) {
+                coreExports.info(`* ❌ Check Run Failed: ${row.name} (status: ${row.status})`);
+                this.containsFailure = true;
+            }
+        }
+        if (!currentJobIsFound) {
+            coreExports.warning('⏳ The current job has not yet been reported — likely caused by check_runs API lag.');
+            this.stillRunning = true;
+        }
+        if (this.containsFailure) {
+            coreExports.setFailed('❌ Some CI checks or statuses failed, please check the summary table.');
+            this.shouldRetry = false;
+        }
+        else if (!this.stillRunning) {
+            coreExports.info('✅ All CI checks and statuses passed or were skipped.');
+            this.shouldRetry = false;
+        }
+        else {
+            coreExports.info('⏳ Some checks are still running');
+            this.shouldRetry = true;
+        }
+    }
+    async print() {
+        const header = '| Check Name | Source | Start Time | Duration | Status | Interpreted as |\n' +
+            '|------------|--------|------------|----------|--------|----------------|\n';
+        const markdownRows = this.items
+            .map(row => {
+            const durationSeconds = row.duration != null ? `${Math.round(row.duration)}s` : '-';
+            const nameLink = row.url ? `[${row.name}](${row.url})` : row.name;
+            return `| ${nameLink} | ${row.source} | ${row.start || '-'} | ${durationSeconds} | ${row.status} | ${fancyInterpretation(row.interpreted)} |`;
+        })
+            .join('\n');
+        const fullTable = header + markdownRows + '\n';
+        const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+        if (summaryPath) {
+            await require$$1$1.promises.appendFile(summaryPath, fullTable, 'utf8');
+        }
+        else {
+            coreExports.info('GITHUB_STEP_SUMMARY not available');
+            coreExports.info(fullTable);
+        }
+    }
+}
+
+async function sleep(seconds) {
+    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+}
+async function run() {
+    try {
+        const token = coreExports.getInput('github-token', { required: true });
+        const initialDelaySeconds = parseInt(coreExports.getInput('initial-delay-seconds') || '5', 10);
+        const maxRetries = parseInt(coreExports.getInput('max-retries') || '5', 10);
+        const retryIntervalSeconds = parseInt(coreExports.getInput('polling-interval') || '60', 10);
+        const ignoredNamePatterns = coreExports.getInput('ignored-name-patterns') || '';
         const octokit = new Octokit({ auth: token });
+        const { owner, repo } = githubExports.context.repo;
         const pr = githubExports.context.payload.pull_request;
         if (!pr) {
             coreExports.setFailed('This action must be run on a pull_request event.');
             return;
         }
-        const sha = pr.head.sha;
-        coreExports.info(`Checking CI statuses for commit: ${sha}`);
-        let currentRetry = 1;
-        while (true) {
-            const summaryRows = await getSummaryRows(octokit, sha, ignoredNameRegexps);
-            const failures = [];
-            let stillRunning = false;
-            let currentJobIsFound = false;
-            for (const row of summaryRows) {
-                if (row.interpreted === Interpretation.CurrentJob) {
-                    coreExports.info(`Skipping current running check: ${row.name}`);
-                    currentJobIsFound = true;
-                }
-                else if (row.interpreted === Interpretation.Ignored) {
-                    coreExports.info(`Ignoring commit status ${row.name} (matched ignore pattern)`);
-                }
-                else if (row.interpreted === Interpretation.StillRunning) {
-                    coreExports.info(`⏳ ${row.name} is still running (state: ${row.status})`);
-                    stillRunning = true;
-                }
-                else if (row.interpreted === Interpretation.Failure) {
-                    coreExports.info(`❌ Check Run Failed: ${row.name} (status: ${row.status})`);
-                    failures.push(row);
-                }
-            }
-            if (failures.length > 0) {
-                coreExports.setFailed('Some CI checks or statuses failed, please check the summary table.');
-                await writeSummaryTable(summaryRows);
-                return;
-            }
-            else if (!currentJobIsFound) {
-                coreExports.warning('❌ The current job has not yet been reported — likely caused by check_runs API lag.');
-            }
-            else if (!stillRunning) {
-                coreExports.info('✅ All CI checks and statuses passed or were skipped.');
-                await writeSummaryTable(summaryRows);
-                return;
-            }
-            else if (currentRetry === maxRetries) {
-                coreExports.setFailed('Timed out waiting for CI checks to finish.');
-                await writeSummaryTable(summaryRows);
-                return;
-            }
-            else {
-                coreExports.info(`Some checks are still running, ${maxRetries - currentRetry} retries left`);
-                if (currentRetry === 1) {
-                    coreExports.info(`Waiting ${initialDelaySeconds}s before retrying...`);
-                    await sleep(initialDelaySeconds);
-                }
-                else {
-                    coreExports.info(`Waiting ${retryIntervalSeconds}s before retrying...`);
-                    await sleep(retryIntervalSeconds);
-                }
-                currentRetry++;
-            }
+        const report = new CheckReport(owner, repo, pr.head.sha, ignoredNamePatterns, githubExports.context.job);
+        coreExports.info(`Checking CI statuses for commit: ${report.sha}`);
+        const { data: run } = await octokit.rest.actions.getWorkflowRun({
+            owner,
+            repo,
+            run_id: githubExports.context.runId,
+        });
+        if (run.run_attempt !== 1) {
+            coreExports.info(`This is the #${run.run_attempt} attempt of the workflow, performing an initial check.`);
+            await report.fill(octokit);
         }
+        let currentRetry = 1;
+        while (report.shouldRetry && currentRetry <= maxRetries) {
+            const delay = currentRetry === 1 ? initialDelaySeconds : retryIntervalSeconds;
+            coreExports.info(`Waiting ${delay}s (${maxRetries - currentRetry + 1} retries left).`);
+            await sleep(delay);
+            await report.fill(octokit);
+            currentRetry++;
+        }
+        if (report.shouldRetry && currentRetry > maxRetries) {
+            const message = '❌ Some checks are still running, but we are not retrying anymore.';
+            coreExports.setFailed(message);
+            coreExports.info(message);
+        }
+        await report.print();
     }
     catch (error) {
         coreExports.setFailed(error.message);

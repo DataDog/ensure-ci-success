@@ -48,7 +48,7 @@ The final step is to make this job a requirements for merges using branch protec
 | :------------------------- | :-------------------- | :------------------------------------------------------------------: |
 | `github-token`             | `${{ github.token }}` |                    GitHub token to access the API                    |
 | `ignored-name-patterns`    | (empty)               | List of regular expressions to ignore specific check or status names |
-| `initial-delay-seconds`    | `0`                   |       Number of seconds to wait before the first check starts        |
+| `initial-delay-seconds`    | `5`                   |       Number of seconds to wait before the first check starts        |
 | `max-retries`              | `5`                   |    Maximum number of retries while waiting for checks to complete    |
 | `polling-interval-seconds` | `60`                  |              Number of seconds to wait between retries               |
 
