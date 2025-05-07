@@ -15,7 +15,7 @@
         "GITHUB_REPOSITORY": "DataDog/ensure-ci-success",
         "GITHUB_EVENT_NAME": "pull_request",
         "GITHUB_REF": "refs/pull/123/merge",
-        "INPUT-INITIAL-DELAY-SECONDS": "0",
+        "INPUT-INITIAL-DELAY-SECONDS": "1",
         "INPUT-MAX-RETRIES": "5",
         "INPUT-POLLING-INTERVAL": "10"
       },

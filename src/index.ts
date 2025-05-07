@@ -11,7 +11,7 @@ async function sleep(seconds: number): Promise<void> {
 async function run(): Promise<void> {
   try {
     const token = core.getInput('github-token', { required: true });
-    const initialDelaySeconds = parseInt(core.getInput('initial-delay-seconds') || '0', 10);
+    const initialDelaySeconds = parseInt(core.getInput('initial-delay-seconds') || '5', 10);
     const maxRetries = parseInt(core.getInput('max-retries') || '5', 10);
     const retryIntervalSeconds = parseInt(core.getInput('polling-interval') || '60', 10);
     const ignoredNamePatterns = core.getInput('ignored-name-patterns') || '';

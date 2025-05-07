@@ -116460,7 +116460,7 @@ async function sleep(seconds) {
 async function run() {
     try {
         const token = coreExports.getInput('github-token', { required: true });
-        const initialDelaySeconds = parseInt(coreExports.getInput('initial-delay-seconds') || '0', 10);
+        const initialDelaySeconds = parseInt(coreExports.getInput('initial-delay-seconds') || '5', 10);
         const maxRetries = parseInt(coreExports.getInput('max-retries') || '5', 10);
         const retryIntervalSeconds = parseInt(coreExports.getInput('polling-interval') || '60', 10);
         const ignoredNamePatterns = coreExports.getInput('ignored-name-patterns') || '';
