@@ -3,7 +3,7 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { Octokit } from '@octokit/rest';
 
-import { StatusType } from './types';
+import { StatusType, CheckRunType } from './types';
 import { SummaryRow, Interpretation } from './summary-row';
 
 async function sleep(seconds: number): Promise<void> {
@@ -82,12 +82,37 @@ async function getSummaryRows(
   const { owner, repo } = github.context.repo;
   const currentJobName = github.context.job;
 
-  const checkRuns = await octokit.paginate(octokit.rest.checks.listForRef, {
+  const checkSuites = await octokit.paginate(octokit.rest.checks.listSuitesForRef, {
     owner,
     repo,
     ref: sha,
     per_page: 100,
   });
+
+  const checkRuns: CheckRunType[] = [];
+
+  for (const suite of checkSuites) {
+    if (suite.latest_check_runs_count === 0) {
+      core.debug(`Check suite ${suite.id} has no check runs (${suite.url}`);
+    } else if (
+      suite.conclusion === null ||
+      ['success', 'neutral', 'skipped'].includes(suite.conclusion)
+    ) {
+      core.info(
+        `Check suite ${suite.id} conclusion is ${suite.conclusion} (${suite.latest_check_runs_count} runs) (${suite.url})`
+      );
+    } else {
+      core.info(`Get ${suite.latest_check_runs_count} runs for check suite ${suite.url}`);
+      const subCheckRuns = await octokit.paginate(octokit.rest.checks.listForSuite, {
+        owner,
+        repo,
+        check_suite_id: suite.id,
+        per_page: 100,
+      });
+      checkRuns.push(...subCheckRuns);
+    }
+  }
+
   core.info(`Found ${checkRuns.length} check runs`);
 
   const statuses = await getAllCombinedStatuses(octokit, { owner, repo, ref: sha });
