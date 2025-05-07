@@ -9,10 +9,10 @@
       "envFile": "${workspaceFolder}/.env.debug",
       "runtimeExecutable": "node",
       "env": {
-        "GITHUB_JOB": "All jobs are green",
-        "GITHUB_RUN_ID": "14834798138",
+        "GITHUB_JOB": "build-and-test",
+        "GITHUB_RUN_ID": "14889189674",
         "GITHUB_EVENT_PATH": "${workspaceFolder}/.vscode/mock-event.json",
-        "GITHUB_REPOSITORY": "DataDog/dd-trace-php",
+        "GITHUB_REPOSITORY": "DataDog/ensure-ci-success",
         "GITHUB_EVENT_NAME": "pull_request",
         "GITHUB_REF": "refs/pull/123/merge",
         "INPUT-INITIAL-DELAY-SECONDS": "0",

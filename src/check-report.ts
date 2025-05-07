@@ -55,7 +55,7 @@ export class CheckReport {
 
   containsFailure = false;
   stillRunning = false;
-  shouldRetry = false;
+  shouldRetry = true;
 
   constructor(
     owner: string,

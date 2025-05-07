@@ -116339,7 +116339,7 @@ class CheckReport {
     items = [];
     containsFailure = false;
     stillRunning = false;
-    shouldRetry = false;
+    shouldRetry = true;
     constructor(owner, repo, sha, ignoredNamePatterns, currentJobName) {
         this.owner = owner;
         this.repo = repo;
