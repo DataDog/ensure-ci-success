@@ -116356,12 +116356,32 @@ async function getAllCombinedStatuses(octokit, params) {
 async function getSummaryRows(octokit, sha, ignoredNameRegexps) {
     const { owner, repo } = githubExports.context.repo;
     const currentJobName = githubExports.context.job;
-    const checkRuns = await octokit.paginate(octokit.rest.checks.listForRef, {
+    const checkSuites = await octokit.paginate(octokit.rest.checks.listSuitesForRef, {
         owner,
         repo,
         ref: sha,
         per_page: 100,
     });
+    const checkRuns = [];
+    for (const suite of checkSuites) {
+        if (suite.latest_check_runs_count === 0) {
+            coreExports.debug(`Check suite ${suite.id} has no check runs (${suite.url}`);
+        }
+        else if (suite.conclusion !== null &&
+            ['success', 'neutral', 'skipped'].includes(suite.conclusion)) {
+            coreExports.info(`Check suite ${suite.id} conclusion is ${suite.conclusion} (${suite.latest_check_runs_count} runs) (${suite.url})`);
+        }
+        else {
+            coreExports.info(`Get ${suite.latest_check_runs_count} runs for check suite ${suite.url}`);
+            const subCheckRuns = await octokit.paginate(octokit.rest.checks.listForSuite, {
+                owner,
+                repo,
+                check_suite_id: suite.id,
+                per_page: 100,
+            });
+            checkRuns.push(...subCheckRuns);
+        }
+    }
     coreExports.info(`Found ${checkRuns.length} check runs`);
     const statuses = await getAllCombinedStatuses(octokit, { owner, repo, ref: sha });
     coreExports.info(`Found ${statuses.length} commit statuses`);
