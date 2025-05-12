@@ -116359,34 +116359,51 @@ class CheckReport {
             ref: this.sha,
             per_page: 100,
         });
-        const checkRuns = [];
+        const checkRuns = {};
         for (const suite of checkSuites) {
             if (suite.latest_check_runs_count === 0) {
                 coreExports.debug(`Check suite ${suite.id} has no check runs (${suite.url}`);
             }
-            else if (suite.conclusion !== null &&
-                ['success', 'neutral', 'skipped'].includes(suite.conclusion)) {
-                coreExports.info(`Check suite ${suite.id} conclusion is ${suite.conclusion} (${suite.latest_check_runs_count} runs) (${suite.url})`);
-            }
             else {
-                coreExports.info(`Get ${suite.latest_check_runs_count} runs for check suite ${suite.url}`);
+                // we cannot skip any suite, because rerun may have been triggered
+                coreExports.info(`Get ${suite.latest_check_runs_count} runs for check suite ${suite.url} (conclusion: ${suite.conclusion})`);
                 const subCheckRuns = await octokit.paginate(octokit.rest.checks.listForSuite, {
                     owner: this.owner,
                     repo: this.repo,
                     check_suite_id: suite.id,
                     per_page: 100,
                 });
-                checkRuns.push(...subCheckRuns);
+                subCheckRuns.forEach(checkRun => {
+                    // dark corners of github API: there is no way to get "last check run" for a ref
+                    // so we filter out them by app.id/names
+                    if (checkRun.name.includes('${{')) {
+                        // dark dark corners of github API: names can be not fully interpreted
+                        // ignoring them
+                        coreExports.debug(`Skipping GitHub Actions check run ${checkRun.html_url}`);
+                        return;
+                    }
+                    const key = `${checkRun.app?.id}#${checkRun.name}`;
+                    if (key in checkRuns) {
+                        coreExports.debug(`Duplicate check run ${checkRun.html_url}`);
+                        if (checkRun.id > checkRuns[key].id) {
+                            // pick the last one
+                            checkRuns[key] = checkRun;
+                        }
+                    }
+                    else {
+                        checkRuns[key] = checkRun;
+                    }
+                });
             }
         }
-        coreExports.info(`Found ${checkRuns.length} check runs`);
+        coreExports.info(`Found ${Object.keys(checkRuns).length} check runs`);
         const statuses = await getAllCombinedStatuses(octokit, {
             owner: this.owner,
             repo: this.repo,
             ref: this.sha,
         });
         coreExports.info(`Found ${statuses.length} commit statuses`);
-        for (const check of checkRuns) {
+        for (const check of Object.values(checkRuns)) {
             this.items.push(SummaryRow.fromCheck(check, this.ignoredNameRegexps, this.currentJobName));
         }
         for (const status of statuses) {
