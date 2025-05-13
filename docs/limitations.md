@@ -1,6 +1,6 @@
 ## Do not set a name to the job shipping ensure-ci-success
 
-The `ensure-ci-success` action verifies that all jobs in a pull request have completed successfully. However, since it runs as part of the current workflow, it must exclude itself from the list of jobs it evaluates.
+The `ensure-ci-success` action verifies that all jobs in a pull request have completed successfully. However, since it runs as part of the current pull request CI, it must exclude itself from the list of jobs it evaluates.
 
 To do this, it needs to identify itself within the job list returned by the GitHub API. While the workflow run ID is accessible via `GITHUB_RUN_ID`, the numerical job ID of the currently running job is not directly [accessible](https://github.com/orgs/community/discussions/129314).
 
