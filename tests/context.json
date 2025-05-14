@@ -1,0 +1,41 @@
+{
+  "action": "opened",
+  "number": 42,
+  "pull_request": {
+    "number": 42,
+    "head": {
+      "sha": "abc123def456",
+      "ref": "feature-branch",
+      "repo": {
+        "full_name": "octo-org/example-repo",
+        "owner": {
+          "login": "octocat"
+        },
+        "name": "example-repo"
+      }
+    },
+    "base": {
+      "ref": "main",
+      "repo": {
+        "full_name": "octo-org/example-repo",
+        "owner": {
+          "login": "octo-org"
+        },
+        "name": "example-repo"
+      }
+    },
+    "user": {
+      "login": "octocat"
+    }
+  },
+  "repository": {
+    "full_name": "octo-org/example-repo",
+    "owner": {
+      "login": "octo-org"
+    },
+    "name": "example-repo"
+  },
+  "sender": {
+    "login": "octocat"
+  }
+}

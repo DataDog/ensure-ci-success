@@ -1,31 +1,10 @@
 import * as fs from 'fs';
 import * as core from '@actions/core';
-import { Octokit } from '@octokit/rest';
+import * as github from '@actions/github';
 import { SummaryRow, Interpretation } from './summary-row';
 
-import { StatusType, CheckRunType } from './types';
-
-async function getAllCombinedStatuses(
-  octokit: Octokit,
-  params: { owner: string; repo: string; ref: string }
-): Promise<StatusType[]> {
-  const allStatuses = [];
-  const pagedParams = { ...params, per_page: 100, page: 1 };
-
-  while (true) {
-    const { data } = await octokit.rest.repos.getCombinedStatusForRef(pagedParams);
-
-    allStatuses.push(...data.statuses);
-
-    if (data.statuses.length < pagedParams.per_page) {
-      break;
-    }
-
-    pagedParams.page++;
-  }
-
-  return allStatuses;
-}
+import { StatusType, CheckRunType, OctokitType } from './types';
+import { setFailed } from './utils';
 
 function fancyInterpretation(interpreted: Interpretation) {
   switch (interpreted) {
@@ -51,6 +30,8 @@ export class CheckReport {
   ignoredNameRegexps: RegExp[];
   currentJobName: string;
 
+  octokit: OctokitType;
+
   items: SummaryRow[] = [];
 
   containsFailure = false;
@@ -58,6 +39,7 @@ export class CheckReport {
   shouldRetry = true;
 
   constructor(
+    token: string,
     owner: string,
     repo: string,
     sha: string,
@@ -73,12 +55,13 @@ export class CheckReport {
       .filter(Boolean)
       .map(pattern => new RegExp(`^${pattern}$`));
     this.currentJobName = currentJobName;
+    this.octokit = github.getOctokit(token);
   }
 
-  async fill(octokit: Octokit): Promise<void> {
+  async fill(): Promise<void> {
     this.items.length = 0; // Clear the array
 
-    const checkSuites = await octokit.paginate(octokit.rest.checks.listSuitesForRef, {
+    const checkSuites = await this.octokit.paginate(this.octokit.rest.checks.listSuitesForRef, {
       owner: this.owner,
       repo: this.repo,
       ref: this.sha,
@@ -95,7 +78,7 @@ export class CheckReport {
         core.info(
           `Get ${suite.latest_check_runs_count} runs for check suite ${suite.url} (conclusion: ${suite.conclusion})`
         );
-        const subCheckRuns = await octokit.paginate(octokit.rest.checks.listForSuite, {
+        const subCheckRuns = await this.octokit.paginate(this.octokit.rest.checks.listForSuite, {
           owner: this.owner,
           repo: this.repo,
           check_suite_id: suite.id,
@@ -129,11 +112,7 @@ export class CheckReport {
 
     core.info(`Found ${Object.keys(checkRuns).length} check runs`);
 
-    const statuses = await getAllCombinedStatuses(octokit, {
-      owner: this.owner,
-      repo: this.repo,
-      ref: this.sha,
-    });
+    const statuses = await this.getAllCombinedStatuses();
     core.info(`Found ${statuses.length} commit statuses`);
 
     for (const check of Object.values(checkRuns)) {
@@ -145,6 +124,31 @@ export class CheckReport {
     }
 
     this.compute();
+  }
+
+  private async getAllCombinedStatuses(): Promise<StatusType[]> {
+    const allStatuses = [];
+    const pagedParams = {
+      owner: this.owner,
+      repo: this.repo,
+      ref: this.sha,
+      per_page: 100,
+      page: 1,
+    };
+
+    while (true) {
+      const { data } = await this.octokit.rest.repos.getCombinedStatusForRef(pagedParams);
+
+      allStatuses.push(...data.statuses);
+
+      if (data.statuses.length < pagedParams.per_page) {
+        break;
+      }
+
+      pagedParams.page++;
+    }
+
+    return allStatuses;
   }
 
   private compute(): void {
@@ -170,13 +174,13 @@ export class CheckReport {
 
     if (!currentJobIsFound) {
       core.warning(
-        '⏳ The current job has not yet been reported — likely caused by check_runs API lag.'
+        `⏳ The current job (${this.currentJobName}) has not yet been reported — likely caused by check_runs API lag.`
       );
       this.stillRunning = true;
     }
 
     if (this.containsFailure) {
-      core.setFailed('❌ Some CI checks or statuses failed, please check the summary table.');
+      setFailed('❌ Some CI checks or statuses failed, please check the summary table.');
       this.shouldRetry = false;
     } else if (!this.stillRunning) {
       core.info('✅ All CI checks and statuses passed or were skipped.');
