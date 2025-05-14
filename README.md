@@ -27,6 +27,7 @@ on:
       - reopened
 
 permissions:
+  actions: read
   checks: read
   statuses: read
 

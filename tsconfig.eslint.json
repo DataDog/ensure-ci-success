@@ -9,6 +9,7 @@
   "include": [
     "__fixtures__",
     "__tests__",
+    "tests",
     "src",
     "eslint.config.mjs",
     "jest.config.js",
