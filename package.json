@@ -17,7 +17,7 @@
     "format:check": "npx prettier --check .",
     "package": "npx rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "lint": "npx eslint .",
-    "test": "node --experimental-vm-modules --loader ts-node/esm node_modules/.bin/jest"
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --coverage"
   },
   "dependencies": {
     "@actions/core": "^1.11.1",

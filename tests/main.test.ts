@@ -2,8 +2,7 @@ import { jest } from '@jest/globals';
 import nock from 'nock';
 
 import { core } from './mocks/actions-core';
-import { setupGitHubContext } from './helpers/setupContext';
-import { mockGithubApi } from './mocks/github-api';
+import { mockGithub } from './mocks/github';
 
 const realSetTimeOut = global.setTimeout;
 
@@ -29,11 +28,23 @@ describe('ensure-ci-success functional test', () => {
   });
 
   it('outputs success=true if all jobs succeed', async () => {
-    setupGitHubContext();
-
-    mockGithubApi().addActionRun().addCheckSuite().addCheckRun().addEmptyCommitStatuses();
+    mockGithub()
+      .setupContextWithPullRequest()
+      .addActionRun()
+      .addCheckSuite()
+      .addCheckRun()
+      .addEmptyCommitStatuses();
 
     await main.run();
+
     expect(core.setFailed).not.toHaveBeenCalled();
+  });
+
+  it('fail if event is not pull_requests', async () => {
+    mockGithub().setupContextWithoutPullRequest();
+
+    await main.run();
+
+    expect(core.setFailed).toHaveBeenCalled();
   });
 });

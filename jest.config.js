@@ -15,4 +15,6 @@ export default {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   testMatch: ['**/tests/**/*.test.mts', '**/tests/**/*.test.ts'],
+  collectCoverage: true,
+  collectCoverageFrom: ['src/**/*.ts'],
 };
