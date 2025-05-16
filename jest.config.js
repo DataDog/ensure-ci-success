@@ -17,4 +17,12 @@ export default {
   testMatch: ['**/tests/**/*.test.mts', '**/tests/**/*.test.ts'],
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.ts'],
+  coverageThreshold: {
+    global: {
+      branches: 60,
+      functions: 90,
+      lines: 78,
+      statements: 78,
+    },
+  },
 };
