@@ -1,9 +1,46 @@
+import * as github from '@actions/github';
+import { jest } from '@jest/globals';
 import nock from 'nock';
 
-export class MockGitHubApi {
+const context = {
+  runId: 123,
+  job: 'ensure-ci-success',
+  repo: {
+    owner: 'octo-org',
+    repo: 'example-repo',
+  },
+  payload: {},
+};
+
+jest.mock('@actions/github', () => {
+  const originalModule = jest.requireActual<typeof github>('@actions/github');
+  return {
+    ...originalModule,
+    context: context,
+  };
+});
+
+export class MockGitHub {
   private scope: nock.Scope;
   constructor() {
     this.scope = nock('https://api.github.com');
+  }
+
+  public setupContextWithPullRequest() {
+    context.payload = {
+      pull_request: {
+        number: 42,
+        head: {
+          sha: 'abc123def456',
+        },
+      },
+    };
+    return this;
+  }
+
+  public setupContextWithoutPullRequest() {
+    context.payload = {};
+    return this;
   }
 
   public addActionRun() {
@@ -46,8 +83,8 @@ export class MockGitHubApi {
   }
 }
 
-export function mockGithubApi(): MockGitHubApi {
-  return new MockGitHubApi();
+export function mockGithub(): MockGitHub {
+  return new MockGitHub();
 }
 
 export function getActor() {
