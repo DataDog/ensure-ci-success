@@ -9,10 +9,10 @@
       "envFile": "${workspaceFolder}/.env.debug",
       "runtimeExecutable": "node",
       "env": {
-        "GITHUB_JOB": "build-and-test",
-        "GITHUB_RUN_ID": "14931757054",
+        "GITHUB_JOB": "all-green",
+        "GITHUB_RUN_ID": "15045614481",
         "GITHUB_EVENT_PATH": "${workspaceFolder}/.vscode/mock-event.json",
-        "GITHUB_REPOSITORY": "DataDog/system-tests",
+        "GITHUB_REPOSITORY": "DataDog/dd-trace-py",
         "GITHUB_EVENT_NAME": "pull_request",
         "GITHUB_REF": "refs/pull/123/merge",
         "INPUT-INITIAL-DELAY-SECONDS": "1",
