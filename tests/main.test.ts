@@ -27,7 +27,7 @@ describe('ensure-ci-success functional test', () => {
     nock.enableNetConnect();
   });
 
-  it('outputs success=true if all jobs succeed', async () => {
+  it('succeed with a generic scenario', async () => {
     mockGithub()
       .setupContextWithPullRequest()
       .addActionRun()
@@ -37,6 +37,10 @@ describe('ensure-ci-success functional test', () => {
 
     await main.run();
 
+    expect(global.setTimeout).toHaveBeenCalled();
+    expect(core.debug).toHaveBeenCalledWith(
+      'Check suite 666 has no check runs (https://api.github.com/repos/github/hello-world/check-suites/5)'
+    );
     expect(core.setFailed).not.toHaveBeenCalled();
   });
 
@@ -46,5 +50,19 @@ describe('ensure-ci-success functional test', () => {
     await main.run();
 
     expect(core.setFailed).toHaveBeenCalled();
+  });
+
+  it('does not sleep for any job retry', async () => {
+    mockGithub()
+      .setupContextWithPullRequest()
+      .addActionRun({ run_attempt: 2 })
+      .addCheckSuite()
+      .addCheckRun()
+      .addEmptyCommitStatuses();
+
+    await main.run();
+
+    expect(global.setTimeout).not.toHaveBeenCalled();
+    expect(core.setFailed).not.toHaveBeenCalled();
   });
 });

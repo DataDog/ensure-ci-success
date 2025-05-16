@@ -2,18 +2,27 @@ import { jest } from '@jest/globals';
 
 const mockCore = {
   getInput: jest.fn(name => {
-    return name == 'github-token' ? 'token' : '';
+    if (name === 'ignored-name-patterns') {
+      return 'ignored-job';
+    } else if (name === 'github-token') {
+      return 'Not a token';
+    } else {
+      return '';
+    }
   }),
   setOutput: jest.fn(),
   setFailed: jest.fn(),
-  info: jest.fn((message: string) => {
-    console.log(`info [${new Date().toLocaleTimeString()}]: ${message}`);
-  }),
   error: jest.fn((message: string) => {
-    console.log(`error [${new Date().toLocaleTimeString()}]: ${message}`);
+    console.log(`${new Date().toLocaleTimeString()} [ERROR] ${message}`);
   }),
   warning: jest.fn((message: string) => {
-    console.log(`warning [${new Date().toLocaleTimeString()}]: ${message}`);
+    console.log(`${new Date().toLocaleTimeString()} [WARN] ${message}`);
+  }),
+  info: jest.fn((message: string) => {
+    console.log(`${new Date().toLocaleTimeString()}] [INFO] ${message}`);
+  }),
+  debug: jest.fn((message: string) => {
+    console.log(`${new Date().toLocaleTimeString()} [DEBUG] ${message}`);
   }),
 };
 

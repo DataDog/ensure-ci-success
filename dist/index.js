@@ -112564,7 +112564,7 @@ class CheckReport {
         const checkRuns = {};
         for (const suite of checkSuites) {
             if (suite.latest_check_runs_count === 0) {
-                coreExports.debug(`Check suite ${suite.id} has no check runs (${suite.url}`);
+                coreExports.debug(`Check suite ${suite.id} has no check runs (${suite.url})`);
             }
             else {
                 // we cannot skip any suite, because rerun may have been triggered
