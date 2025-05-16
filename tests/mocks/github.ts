@@ -43,8 +43,10 @@ export class MockGitHub {
     return this;
   }
 
-  public addActionRun() {
-    this.scope.get('/repos/octo-org/example-repo/actions/runs/123').reply(200, getActionRun());
+  public addActionRun({ run_attempt = 1 }: { run_attempt?: number } = {}) {
+    this.scope
+      .get('/repos/octo-org/example-repo/actions/runs/123')
+      .reply(200, getActionRun({ run_attempt }));
 
     return this;
   }
@@ -54,7 +56,7 @@ export class MockGitHub {
       .get('/repos/octo-org/example-repo/commits/abc123def456/check-suites?per_page=100')
       .reply(200, {
         total_count: 1,
-        check_suites: [getCheckSuite()],
+        check_suites: [getCheckSuite(), getCheckSuite({ id: 666, latest_check_runs_count: 0 })],
       });
 
     return this;
@@ -64,8 +66,14 @@ export class MockGitHub {
     this.scope
       .get('/repos/octo-org/example-repo/check-suites/1234567890/check-runs?per_page=100')
       .reply(200, {
-        total_count: 1,
-        check_runs: [getCheckRun()],
+        total_count: 3,
+        check_runs: [
+          getCheckRun(), // current job
+          getCheckRun({ name: '${{ not interpolated }}', conclusion: 'failure' }),
+          getCheckRun({ id: 1, name: 'some-job', conclusion: 'failure' }),
+          getCheckRun({ id: 2, name: 'some-job', conclusion: 'success' }),
+          getCheckRun({ name: 'ignored-job', conclusion: 'failure' }),
+        ],
       });
 
     return this;
@@ -109,7 +117,7 @@ export function getRepository() {
   };
 }
 
-export function getActionRun() {
+export function getActionRun({ run_attempt = 1 }: { run_attempt?: number } = {}) {
   return {
     id: 123,
     head_sha: '',
@@ -117,7 +125,7 @@ export function getActionRun() {
     conclusion: null,
     name: '',
     run_number: 0,
-    run_attempt: 1,
+    run_attempt: run_attempt,
     event: '',
     actor: getActor(),
     repository: getRepository(),
@@ -126,12 +134,17 @@ export function getActionRun() {
   };
 }
 
-export function getCheckSuite() {
+export function getCheckSuite({
+  id = 1234567890,
+  latest_check_runs_count = 1,
+}: { id?: number; latest_check_runs_count?: number } = {}) {
   return {
-    id: 1234567890,
+    id: id,
     head_sha: '',
     status: 'completed',
     conclusion: 'success',
+    latest_check_runs_count: latest_check_runs_count,
+    url: 'https://api.github.com/repos/github/hello-world/check-suites/5',
     app: {
       id: 15368,
       slug: 'github-actions',
@@ -142,13 +155,17 @@ export function getCheckSuite() {
   };
 }
 
-export function getCheckRun() {
+export function getCheckRun({
+  id = 1,
+  name = 'ensure-ci-success',
+  conclusion = 'success',
+}: { id?: number; name?: string; conclusion?: string } = {}) {
   return {
-    id: 987654321,
-    name: 'ensure-ci-success',
+    id: id,
+    name: name,
     head_sha: 'abc123def456',
     status: 'completed',
-    conclusion: 'success',
+    conclusion: conclusion,
     started_at: '2024-05-12T00:00:00Z',
     completed_at: '2024-05-12T00:05:00Z',
     app: {
