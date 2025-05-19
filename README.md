@@ -43,7 +43,6 @@ The final step is to make this job a requirements for merges using branch protec
 
 It's a good practice to set this job as a final job in your pipeline using `needs` parameter, to limit useless CPU time. Though, if you do so, any failure will prevent this last job to run, and Github Pr engine does not account it as failed. So do not forget to add a parameter `if: '!cancelled()'`, it will force the job to run, unless it's explicitly cancelled.
 
-
 ## Inputs
 
 | Name                       | Default               |                             Description                              |

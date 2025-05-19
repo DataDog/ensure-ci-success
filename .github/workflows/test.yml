@@ -9,7 +9,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
   tests:
     runs-on: ubuntu-latest
 

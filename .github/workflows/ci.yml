@@ -23,7 +23,7 @@ jobs:
   all-green:
     runs-on: ubuntu-latest
 
-    needs: 
+    needs:
       - failure
     steps:
       - name: Checkout code
