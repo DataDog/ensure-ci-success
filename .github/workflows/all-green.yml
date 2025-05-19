@@ -1,0 +1,19 @@
+
+name: Check Pull Request CI Status
+
+on:
+  # pull_request:
+  check_run:
+  status:
+
+permissions:
+  actions: read
+  checks: read
+  statuses: read
+
+jobs:
+  all-green:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Ensure CI Success
+        uses: DataDog/ensure-ci-success@7f07c702642a8ee817e0df5c61dcbdf3970f9651
