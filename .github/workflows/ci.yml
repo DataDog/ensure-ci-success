@@ -1,4 +1,4 @@
-name: CI
+name: Auto-test
 
 on:
   pull_request:

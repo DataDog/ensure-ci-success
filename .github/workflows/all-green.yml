@@ -1,5 +1,5 @@
 
-name: Check Pull Request CI Status
+name: All Green
 
 on:
   # pull_request:
