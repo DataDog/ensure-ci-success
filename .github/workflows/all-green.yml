@@ -4,6 +4,7 @@ name: All Green
 on:
   # pull_request:
   check_run:
+  check_suite:
   status:
 
 permissions:
