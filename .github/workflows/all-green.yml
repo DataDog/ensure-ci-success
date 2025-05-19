@@ -5,6 +5,8 @@ on:
   check_run:
   check_suite:
   status:
+  workflow_run:
+    workflows: ["Auto-test", "Lint", "Tests"]
 
 permissions:
   actions: read
