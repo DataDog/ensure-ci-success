@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run Ensure CI Success
-        uses: DataDog/ensure-ci-success@v1
+        uses: DataDog/ensure-ci-success@v2
 ```
 
 The final step is to make this job a requirements for merges using branch protection rules.
@@ -56,7 +56,7 @@ It's a good practice to set this job as a final job in your pipeline using `need
 ```yml
 steps:
   - name: Run Ensure CI Success
-    uses: DataDog/ensure-ci-success@v1
+    uses: DataDog/ensure-ci-success@v2
     with:
       initial-delay-seconds: 60 # Wait 60 seconds before starting
       max-retries: 10 # Retries 10 times
@@ -82,3 +82,5 @@ While it's possible to enforce a green CI policy using GitHub's native "required
 - It introduces ongoing maintenance overhead as the job list evolves
 
 This project provides a flexible and maintainable alternative. Ideally, GitHub will eventually support native enforcement of successful CI completion across all jobs. If and when that happens, this project may become obsolete and will be archived accordingly.
+
+Like any workaround, it comes with some [limitations](docs/limitations.md) and potential [implementations pitfalls](docs/implementations.md). So make sure to read the documentation carefully!

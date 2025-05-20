@@ -1,23 +1,25 @@
-The first thing to keep in mind is that it takes a pictures of your CI statuses, retries if one of them is running, fails if one of them is failing, and succeed if all of them succeed.
+The first thing to understand is how the action works: it takes a snapshot of your CI statuses, retries if any are still running, fails if any have failed, and succeeds only if all have succeeded.
 
-It mean that if the picture totally misses some points, it'll be ignored. The `initial-delay-seconds` helps to limit this risk, but it's a race condition. so it's a good idea to keep some of your important job in the required list of jobs.
+This means that if some statuses are missing at the time of the snapshot, they’ll simply be ignored. You can reduce the chance of this happening by configuring `initial-delay-seconds`, but it's still fundamentally a race condition. To mitigate this, it's a good idea to include your most critical jobs in the required checks list.
 
-Now, let's talk about you implement it in your CI. We'll go threw two different strategies.
+Now, let’s look at how you can integrate the action into your CI setup. There are two main strategies:
 
 ## Dedicated workflow
 
-Set this step inside a job, inside a dedicated workflow
+Add the action as a step in a job inside a separate, dedicated workflow.
 
-- PRO : cleaner if you have lot of workflows
-- CON : will requires an aditional action on retries
-- CON : needs to set an arbitrary `initial-delay-seconds` that may not be trivial
+- PRO: Keeps things clean, especially if you have many workflows.
+- CON: Requires manually triggering a retry if needed.
+- CON: You must configure an appropriate `initial-delay-seconds`, which can be tricky to get right.
 
-## Append at the end of an existing workflow
+## Appended to an existing Workflow
 
-If your repo got only one workflow, you can simply add a new job in an existing workflow, an plays with `need` parameter to put it at the end of the workflow.
+If your repository has only one main workflow, you can simply append a new job at the end of it using the `needs` keyword.
 
-- PRO : does not require an `initial-delay-seconds`, as it runs at the very end
-- PRO : automatically retried
-- CON : Do not forget to add `if: always()` or `if: !cancelled()`, as if a previous job fails, the job is marked as skipped, which won't block the PR.
+- PRO: No need to configure `initial-delay-seconds`, since it runs last by design.
+- PRO: Will automatically be included in workflow retries.
+- CON: Be sure to add `if: always()` or `if: !cancelled()` to the job. Otherwise, if a previous job fails, this job will be skipped — and GitHub will consider the check as passed, allowing the PR to be merged even though other jobs failed.
 
-## Mixed
+## Hybrid approach
+
+You can also mix the two strategies—for example, by appending the job to one of several workflows in your repository.
