@@ -18,10 +18,11 @@ jobs:
   failure:
     runs-on: ubuntu-latest
     steps:
+      - run: sleep 60
       - run: exit 1
 
   build-and-test:
-    # if: '!cancelled()'
+    if: '!cancelled()'
     runs-on: ubuntu-latest
 
     needs:
