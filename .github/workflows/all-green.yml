@@ -2,7 +2,7 @@ name: All Green
 
 on:
   workflow_run:
-    workflows: ["Auto-test", "Lint", "Tests"]
+    workflows: ['Auto-test', 'Lint', 'Tests']
 
 permissions:
   actions: read
