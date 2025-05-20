@@ -8,12 +8,16 @@ Now, let's talk about you implement it in your CI. We'll go threw two different 
 
 Set this step inside a job, inside a dedicated workflow
 
+- PRO : cleaner if you have lot of workflows
+- CON : will requires an aditional action on retries
+- CON : needs to set an arbitrary `initial-delay-seconds` that may not be trivial
+
 ## Append at the end of an existing workflow
 
 If your repo got only one workflow, you can simply add a new job in an existing workflow, an plays with `need` parameter to put it at the end of the workflow.
 
-* PRO : does not require an `initial-delay-seconds`, as it runs at the very end
-* PRO : automatically retried
-* CON : Do not forget to add `if: always()`, as if a previous job fails, or the workflow is cancelled, the job is marked as skipped, which won't block the PR  
+- PRO : does not require an `initial-delay-seconds`, as it runs at the very end
+- PRO : automatically retried
+- CON : Do not forget to add `if: always()` or `if: !cancelled()`, as if a previous job fails, the job is marked as skipped, which won't block the PR.
 
 ## Mixed
