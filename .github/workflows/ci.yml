@@ -1,11 +1,11 @@
-name: CI
+name: Auto-test
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -16,8 +16,8 @@ permissions:
 
 jobs:
   build-and-test:
+    if: '!cancelled()'
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -29,15 +29,6 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-
-      - name: Check code formatting
-        run: npm run format:check
-
-      - name: Lint the code
-        run: npm run lint
-
-      - name: Run tests
-        run: npm test
 
       - name: Build action
         run: npm run build

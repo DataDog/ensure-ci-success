@@ -36,12 +36,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run Ensure CI Success
-        uses: DataDog/ensure-ci-success@v1
+        uses: DataDog/ensure-ci-success@v2
 ```
 
-It's a good practice to set this job as a final job in your pipeline using `needs` parameter, to limit useless CPU time.
-
 The final step is to make this job a requirements for merges using branch protection rules.
+
+It's a good practice to set this job as a final job in your pipeline using `needs` parameter, to limit useless CPU time. Though, if you do so, any failure will prevent this last job to run, and Github Pr engine does not account it as failed. So do not forget to add a parameter `if: '!cancelled()'`, it will force the job to run, unless it's explicitly cancelled.
 
 ## Inputs
 
@@ -56,7 +56,7 @@ The final step is to make this job a requirements for merges using branch protec
 ```yml
 steps:
   - name: Run Ensure CI Success
-    uses: DataDog/ensure-ci-success@v1
+    uses: DataDog/ensure-ci-success@v2
     with:
       initial-delay-seconds: 60 # Wait 60 seconds before starting
       max-retries: 10 # Retries 10 times
@@ -70,7 +70,7 @@ steps:
 
 - Don't set a `job_name` to the job running this action (see why [here](docs/limitations.md))
 - Don't use the same name for another job (for the same reason)
-- If for some reason a job starts **after** the current job is finished, it won't be processed. It's a good practice to add some long-running job as a requirement of the job that perform this action. You also may want to set `initial-delay-seconds`.
+- If a job starts **after** the current job has already completed, it will not be processed. The `initial-delay-seconds` parameter helps reduce the likelihood of this issue but does not eliminate it entirely. TYou can also add a long-running job as a dependency for the job performing this action — just remember to include `if: always()` o ensure it isn't skipped. In all cases, make sure to carefully read the documentation about [implementations strategies](docs/implementations.md).
 
 ---
 
