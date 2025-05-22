@@ -3,6 +3,7 @@ stages:
 
 test_job:
   stage: test
+  tags: ["arch:amd64"]
   script:
     - echo "Sleeping for 120 seconds..."
     - sleep 120
