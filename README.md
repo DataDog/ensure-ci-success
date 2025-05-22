@@ -82,3 +82,5 @@ While it's possible to enforce a green CI policy using GitHub's native "required
 - It introduces ongoing maintenance overhead as the job list evolves
 
 This project provides a flexible and maintainable alternative. Ideally, GitHub will eventually support native enforcement of successful CI completion across all jobs. If and when that happens, this project may become obsolete and will be archived accordingly.
+
+
