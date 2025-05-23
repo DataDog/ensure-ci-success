@@ -5,6 +5,10 @@ on:
     workflows: ['Auto-test', 'Lint', 'Tests']
   status:
 
+concurrency:
+  group: all-green-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   actions: read
   checks: read
