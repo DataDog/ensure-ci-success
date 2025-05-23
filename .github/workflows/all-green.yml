@@ -1,17 +1,18 @@
-# name: All Green
+name: All Green
 
-# on:
-#   workflow_run:
-#     workflows: ['Auto-test', 'Lint', 'Tests']
+on:
+  workflow_run:
+    workflows: ['Auto-test', 'Lint', 'Tests']
+  status:
 
-# permissions:
-#   actions: read
-#   checks: read
-#   statuses: read
+permissions:
+  actions: read
+  checks: read
+  statuses: read
 
-# jobs:
-#   all-green:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Run Ensure CI Success
-#         uses: DataDog/ensure-ci-success@7f07c702642a8ee817e0df5c61dcbdf3970f9651
+jobs:
+  all-green:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Ensure CI Success
+        uses: DataDog/ensure-ci-success@7f07c702642a8ee817e0df5c61dcbdf3970f9651
