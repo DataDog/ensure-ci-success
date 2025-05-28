@@ -5,22 +5,4 @@ test_job:
   stage: test
   tags: ['arch:amd64']
   script:
-    - echo "Sleeping for 120 seconds..."
-    - sleep 120
-    - |
-      if [ -f .ci-attempt ]; then
-        echo "Second attempt -  succeeding!"
-        exit 0
-      else
-        echo "First attempt - failing on purpose."
-        touch .ci-attempt
-        exit 1
-      fi
-  cache:
-    key: test-job-cache
-    paths:
-      - .ci-attempt
-  retry:
-    max: 1
-    when:
-      - script_failure
+    - exit 0

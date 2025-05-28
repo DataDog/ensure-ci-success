@@ -12,7 +12,6 @@ permissions:
   checks: read
   statuses: read
   contents: read
-  packages: read
 
 jobs:
   build-and-test:
