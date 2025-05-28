@@ -21,7 +21,6 @@ If you set a custom [`job_name`](https://docs.github.com/en/actions/writing-work
 
 To ensure reliable self-identification, do not set a name on the job that runs ensure-ci-success, or set it explicitly to match the `job_id`, accompanied by a comment explaining why—so it isn't accidentally changed in the future.
 
-
 ## No Event on Job Retry
 
 GitHub doesn’t provide any event when a job is manually retried. You might think `check_run`, `check_suite`, or `status` events would help — but they only fire on the default branch. That means they won’t show up when working on a pull request branch.
@@ -30,9 +29,9 @@ If you retry a job manually, the `ensure-ci-success` job won’t know about it a
 
 ### Mitigation
 
-* **Fix flaky jobs**
+- **Fix flaky jobs**
   This is the real fix. If your jobs are stable, you’ll rarely hit this issue. In fact, some might say this limitation is a subtle nudge to keep your CI healthy.
-* **Temporarily ignore flaky jobs**
+- **Temporarily ignore flaky jobs**
   Use the ignored-name-patterns input to skip known unreliable jobs. It lowers CI confidence, but if you have a plan to fix them, it’s a reasonable short-term compromise.
-* **Don’t use this Action**
+- **Don’t use this Action**
   If you prefer, you can add individual "gatekeeper" jobs at the end of each workflow instead of relying on a global check.
