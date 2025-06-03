@@ -10,6 +10,7 @@ const context = {
     repo: 'example-repo',
   },
   payload: {},
+  sha: 'abc123def456',
 };
 
 jest.mock('@actions/github', () => {
@@ -40,6 +41,7 @@ export class MockGitHub {
 
   public setupContextWithoutPullRequest() {
     context.payload = {};
+
     return this;
   }
 
@@ -72,6 +74,22 @@ export class MockGitHub {
           getCheckRun({ name: '${{ not interpolated }}', conclusion: 'failure' }),
           getCheckRun({ id: 1, name: 'some-job', conclusion: 'failure' }),
           getCheckRun({ id: 2, name: 'some-job', conclusion: 'success' }),
+          getCheckRun({ name: 'ignored-job', conclusion: 'failure' }),
+        ],
+      });
+
+    return this;
+  }
+
+  public addFailedCheckRun() {
+    this.scope
+      .get('/repos/octo-org/example-repo/check-suites/1234567890/check-runs?per_page=100')
+      .reply(200, {
+        total_count: 3,
+        check_runs: [
+          getCheckRun(), // current job
+          getCheckRun({ name: '${{ not interpolated }}', conclusion: 'failure' }),
+          getCheckRun({ id: 1, name: 'failed-job', conclusion: 'failure' }),
           getCheckRun({ name: 'ignored-job', conclusion: 'failure' }),
         ],
       });

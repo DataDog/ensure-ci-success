@@ -112700,12 +112700,16 @@ async function run() {
         const initialDelaySeconds = parseInt(coreExports.getInput('initial-delay-seconds') || '5', 10);
         const maxRetries = parseInt(coreExports.getInput('max-retries') || '5', 10);
         const retryIntervalSeconds = parseInt(coreExports.getInput('polling-interval') || '60', 10);
-        if (!pr) {
-            setFailed('This action must be run on a pull_request event.');
-            return;
+        let sha = '';
+        if (pr) {
+            sha = pr.head.sha;
+            coreExports.info(`Checking CI statuses for commit: ${sha} on PR #${pr.number}`);
         }
-        const report = new CheckReport(token, owner, repo, pr.head.sha, ignoredNamePatterns, githubExports.context.job);
-        coreExports.info(`Checking CI statuses for commit: ${report.sha}`);
+        else {
+            sha = githubExports.context.sha;
+            coreExports.info(`Checking CI statuses for commit: ${sha} on push event`);
+        }
+        const report = new CheckReport(token, owner, repo, sha, ignoredNamePatterns, githubExports.context.job);
         const { data: run } = await report.octokit.rest.actions.getWorkflowRun({
             owner,
             repo,
