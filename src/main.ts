@@ -18,21 +18,24 @@ export async function run(): Promise<void> {
     const maxRetries = parseInt(core.getInput('max-retries') || '5', 10);
     const retryIntervalSeconds = parseInt(core.getInput('polling-interval') || '60', 10);
 
-    if (!pr) {
-      setFailed('This action must be run on a pull_request event.');
-      return;
+    let sha = '';
+
+    if (pr) {
+      sha = pr.head.sha;
+      core.info(`Checking CI statuses for commit: ${sha} on PR #${pr.number}`);
+    } else {
+      sha = github.context.sha;
+      core.info(`Checking CI statuses for commit: ${sha} on push event`);
     }
 
     const report = new CheckReport(
       token,
       owner,
       repo,
-      pr.head.sha,
+      sha,
       ignoredNamePatterns,
       github.context.job
     );
-
-    core.info(`Checking CI statuses for commit: ${report.sha}`);
 
     const { data: run } = await report.octokit.rest.actions.getWorkflowRun({
       owner,

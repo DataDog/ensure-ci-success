@@ -16,13 +16,14 @@ export default {
   },
   testMatch: ['**/tests/**/*.test.mts', '**/tests/**/*.test.ts'],
   collectCoverage: true,
+  coveragePathIgnorePatterns: ['/src/index.ts'],
   collectCoverageFrom: ['src/**/*.ts'],
   coverageThreshold: {
     global: {
-      branches: 60,
+      branches: 64,
       functions: 90,
-      lines: 78,
-      statements: 78,
+      lines: 80,
+      statements: 80,
     },
   },
 };

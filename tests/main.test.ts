@@ -38,18 +38,29 @@ describe('ensure-ci-success functional test', () => {
     await main.run();
 
     expect(global.setTimeout).toHaveBeenCalled();
+    expect(core.info).toHaveBeenCalledWith(
+      `Checking CI statuses for commit: abc123def456 on PR #42`
+    );
     expect(core.debug).toHaveBeenCalledWith(
       'Check suite 666 has no check runs (https://api.github.com/repos/github/hello-world/check-suites/5)'
     );
     expect(core.setFailed).not.toHaveBeenCalled();
   });
 
-  it('fail if event is not pull_requests', async () => {
-    mockGithub().setupContextWithoutPullRequest();
+  it('succeed with a push event', async () => {
+    mockGithub()
+      .setupContextWithoutPullRequest()
+      .addActionRun()
+      .addCheckSuite()
+      .addCheckRun()
+      .addEmptyCommitStatuses();
 
     await main.run();
 
-    expect(core.setFailed).toHaveBeenCalled();
+    expect(core.info).toHaveBeenCalledWith(
+      `Checking CI statuses for commit: abc123def456 on push event`
+    );
+    expect(core.setFailed).not.toHaveBeenCalled();
   });
 
   it('does not sleep for any job retry', async () => {
@@ -64,5 +75,18 @@ describe('ensure-ci-success functional test', () => {
 
     expect(global.setTimeout).not.toHaveBeenCalled();
     expect(core.setFailed).not.toHaveBeenCalled();
+  });
+
+  it('fail if there is a failure', async () => {
+    mockGithub()
+      .setupContextWithPullRequest()
+      .addActionRun()
+      .addCheckSuite()
+      .addFailedCheckRun()
+      .addEmptyCommitStatuses();
+
+    await main.run();
+
+    expect(core.setFailed).toHaveBeenCalled();
   });
 });
