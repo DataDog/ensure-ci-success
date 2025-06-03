@@ -8,9 +8,9 @@
 
 ## Why?
 
-This Action acts as a **gatekeeper** for CI pipelines, allowing to enable a Green CI Policy on your pull requests.
+This Action acts as a **gatekeeper** for CI pipelines, allowing to enable a Green CI Policy on your pull requests or push events.
 
-It checks that all workflows, checks, and commit statuses associated with a PR **succeed or are skipped**, ensuring PRs don't merge with failing CI.
+It checks that all workflows, checks, and commit statuses associated with a commit sha **succeed or are skipped**, ensuring PRs don't merge with failing CI.
 
 ---
 
