@@ -18,7 +18,7 @@ export async function run(): Promise<void> {
     const maxRetries = parseInt(core.getInput('max-retries') || '5', 10);
     const retryIntervalSeconds = parseInt(core.getInput('polling-interval') || '60', 10);
 
-    let sha: string = '';
+    let sha = '';
 
     if (pr) {
       sha = pr.head.sha;
