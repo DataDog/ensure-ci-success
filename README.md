@@ -8,7 +8,7 @@
 
 ## Why?
 
-This Action acts as a **gatekeeper** for CI pipelines, allowing to enable a Green CI Policy on your pull requests or push events.
+This Action acts as a **gatekeeper** for CI pipelines, allowing you to enable a Green CI Policy on your pull requests or push events.
 
 It checks that all workflows, checks, and commit statuses associated with a commit sha **succeed or are skipped**, ensuring PRs don't merge with failing CI.
 
@@ -39,9 +39,11 @@ jobs:
         uses: DataDog/ensure-ci-success@v2
 ```
 
-The final step is to make this job a requirements for merges using branch protection rules.
+The final step is to make this job a requirement for merges using branch protection rules.
 
-It's a good practice to set this job as a final job in your pipeline using `needs` parameter, to limit useless CPU time. Though, if you do so, any failure will prevent this last job to run, and Github Pr engine does not account it as failed. So do not forget to add a parameter `if: '!cancelled()'`, it will force the job to run, unless it's explicitly cancelled.
+It's a good practice to set this job as a final job in your pipeline using the `needs` parameter, to limit useless CPU time.
+However, if you do so, any failure will prevent this last job from running, and the GitHub PR engine does not account it as failed.
+So do not forget to add the parameter `if: '!cancelled()'`; it will force the job to run unless it's explicitly cancelled.
 
 ## Inputs
 
@@ -70,11 +72,11 @@ steps:
 
 - Don't set a `job_name` to the job running this action (see why [here](docs/limitations.md))
 - Don't use the same name for another job (for the same reason)
-- If a job starts **after** the current job has already completed, it will not be processed. The `initial-delay-seconds` parameter helps reduce the likelihood of this issue but does not eliminate it entirely. TYou can also add a long-running job as a dependency for the job performing this action — just remember to include `if: always()` o ensure it isn't skipped. In all cases, make sure to carefully read the documentation about [implementations strategies](docs/implementations.md).
+- If a job starts **after** the current job has already completed, it will not be processed. The `initial-delay-seconds` parameter helps reduce the likelihood of this issue but does not eliminate it entirely. You can also add a long-running job as a dependency for the job performing this action — just remember to include `if: always()` to ensure it isn't skipped. In all cases, make sure to carefully read the documentation about [implementation strategies](docs/implementation.md).
 
 ---
 
-Note: This project exists to address a [known Github limitation](https://github.com/orgs/community/discussions/26733): by default, GitHub allows pull requests to be merged even when some CI checks fail.
+Note: This project exists to address a [known GitHub limitation](https://github.com/orgs/community/discussions/26733): by default, GitHub allows pull requests to be merged even when some CI checks fail.
 
 While it's possible to enforce a green CI policy using GitHub's native "required status checks" feature, doing so requires explicitly listing all job names under branch protection rules. This approach has two key drawbacks:
 

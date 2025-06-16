@@ -1,4 +1,4 @@
-## Do not set a name to the job shipping ensure-ci-success
+## Do not set a name for the job running ensure-ci-success
 
 The `ensure-ci-success` action verifies that all jobs in a pull request have completed successfully. However, since it runs as part of the current pull request CI, it must exclude itself from the list of jobs it evaluates.
 
