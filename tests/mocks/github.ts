@@ -110,7 +110,7 @@ export class MockGitHub {
           getCommitStatus({ context: 'failed-status', state: 'failure' }),
           getCommitStatus({ context: 'good-status', state: 'success' }),
         ],
-        total_count: 1,
+        total_count: 2,
       });
   }
 
