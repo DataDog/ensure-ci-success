@@ -207,7 +207,7 @@ export class CheckReport {
           item.interpreted === Interpretation.Failure ||
           item.interpreted === Interpretation.StillRunning
       );
-      header += `\n> ℹ️ ${successCount} successful, ${ignoredCount} ignored. Enable "Full details" to see them.\n\n`;
+      header += `\n> ℹ️ ${successCount} successful, ${ignoredCount} ignored. Enable full-details-summary to see them.\n\n`;
     }
 
     const tableHeader =
