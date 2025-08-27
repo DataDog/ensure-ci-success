@@ -112674,7 +112674,7 @@ class CheckReport {
             const successCount = itemsToShow.filter(item => item.interpreted === Interpretation.Success).length;
             itemsToShow = itemsToShow.filter(item => item.interpreted === Interpretation.Failure ||
                 item.interpreted === Interpretation.StillRunning);
-            header += `\n> ℹ️ ${successCount} successful, ${ignoredCount} ignored. Enable "Full details" to see them.\n\n`;
+            header += `\n> ℹ️ ${successCount} successful, ${ignoredCount} ignored. Enable full-details-summary to see them.\n\n`;
         }
         const tableHeader = '| Check Name | Source | Start Time | Duration | Status | Interpreted as |\n' +
             '|------------|--------|------------|----------|--------|----------------|\n';
