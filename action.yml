@@ -21,6 +21,10 @@ inputs:
     description: 'GitHub token to access PR commit statuses and checks'
     required: false
     default: ${{ github.token }}
+  full-details-summary:
+    description: 'True to display all checks in job summary, false to display only failed checks'
+    required: false
+    default: 'false'
 runs:
   using: 'node20'
   main: 'dist/index.js'

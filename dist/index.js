@@ -112666,24 +112666,33 @@ class CheckReport {
             this.shouldRetry = true;
         }
     }
-    async print() {
-        const header = '| Check Name | Source | Start Time | Duration | Status | Interpreted as |\n' +
+    async print(fullDetails) {
+        let header = '';
+        let itemsToShow = this.items;
+        if (!fullDetails) {
+            const ignoredCount = itemsToShow.filter(item => item.interpreted === Interpretation.Ignored).length;
+            const successCount = itemsToShow.filter(item => item.interpreted === Interpretation.Success).length;
+            itemsToShow = itemsToShow.filter(item => item.interpreted === Interpretation.Failure ||
+                item.interpreted === Interpretation.StillRunning);
+            header += `\n> ℹ️ ${successCount} successful, ${ignoredCount} ignored. Enable "Full details" to see them.\n\n`;
+        }
+        const tableHeader = '| Check Name | Source | Start Time | Duration | Status | Interpreted as |\n' +
             '|------------|--------|------------|----------|--------|----------------|\n';
-        const markdownRows = this.items
+        const markdownRows = itemsToShow
             .map(row => {
             const durationSeconds = row.duration != null ? `${Math.round(row.duration)}s` : '-';
             const nameLink = row.url ? `[${row.name}](${row.url})` : row.name;
             return `| ${nameLink} | ${row.source} | ${row.start || '-'} | ${durationSeconds} | ${row.status} | ${fancyInterpretation(row.interpreted)} |`;
         })
             .join('\n');
-        const fullTable = header + markdownRows + '\n';
+        const fullSummary = header + tableHeader + markdownRows + '\n';
         const summaryPath = process.env.GITHUB_STEP_SUMMARY;
         if (summaryPath) {
-            await require$$1$1.promises.appendFile(summaryPath, fullTable, 'utf8');
+            await require$$1$1.promises.appendFile(summaryPath, fullSummary, 'utf8');
         }
         else {
             coreExports.info('GITHUB_STEP_SUMMARY not available');
-            coreExports.info(fullTable);
+            coreExports.info(fullSummary);
         }
     }
 }
@@ -112700,6 +112709,7 @@ async function run() {
         const initialDelaySeconds = parseInt(coreExports.getInput('initial-delay-seconds') || '5', 10);
         const maxRetries = parseInt(coreExports.getInput('max-retries') || '5', 10);
         const retryIntervalSeconds = parseInt(coreExports.getInput('polling-interval') || '60', 10);
+        const fullDetailsSummary = coreExports.getInput('full-details-summary') === 'true';
         let sha = '';
         if (pr) {
             sha = pr.head.sha;
@@ -112730,7 +112740,7 @@ async function run() {
         if (report.shouldRetry && currentRetry > maxRetries) {
             setFailed('❌ Some checks are still running, but we are not retrying anymore.');
         }
-        await report.print();
+        await report.print(fullDetailsSummary);
     }
     catch (error) {
         coreExports.error(error.stack || '');

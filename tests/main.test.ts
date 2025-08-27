@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import nock from 'nock';
 
-import { core } from './mocks/actions-core';
+import { core, mockCore } from './mocks/actions-core';
 import { mockGithub } from './mocks/github';
 
 const realSetTimeOut = global.setTimeout;
@@ -20,6 +20,7 @@ describe('ensure-ci-success functional test', () => {
 
     nock.cleanAll(); // ensure a clean slate
     nock.disableNetConnect(); // prevent real HTTP calls
+    mockCore.resetMockedInputs();
   });
 
   afterEach(() => {
@@ -28,6 +29,7 @@ describe('ensure-ci-success functional test', () => {
   });
 
   it('succeed with a generic scenario', async () => {
+    mockCore.mockInput('ignored-name-patterns', 'ignored-job');
     mockGithub()
       .setupContextWithPullRequest()
       .addActionRun()
@@ -48,6 +50,7 @@ describe('ensure-ci-success functional test', () => {
   });
 
   it('succeed with a push event', async () => {
+    mockCore.mockInput('ignored-name-patterns', 'ignored-job');
     mockGithub()
       .setupContextWithoutPullRequest()
       .addActionRun()
@@ -64,6 +67,7 @@ describe('ensure-ci-success functional test', () => {
   });
 
   it('does not sleep for any job retry', async () => {
+    mockCore.mockInput('ignored-name-patterns', 'ignored-job');
     mockGithub()
       .setupContextWithPullRequest()
       .addActionRun({ run_attempt: 2 })
@@ -88,5 +92,19 @@ describe('ensure-ci-success functional test', () => {
     await main.run();
 
     expect(core.setFailed).toHaveBeenCalled();
+  });
+
+  it('Read input', async () => {
+    mockCore.mockInput('ignored-name-patterns', 'ignored-job\nfailed-job\nfailed-status');
+    mockGithub()
+      .setupContextWithPullRequest()
+      .addActionRun()
+      .addCheckSuite()
+      .addFailedCheckRun()
+      .addFailedStatus();
+
+    await main.run();
+
+    expect(core.setFailed).not.toHaveBeenCalled();
   });
 });

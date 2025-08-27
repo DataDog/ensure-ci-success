@@ -17,6 +17,7 @@ export async function run(): Promise<void> {
     const initialDelaySeconds = parseInt(core.getInput('initial-delay-seconds') || '5', 10);
     const maxRetries = parseInt(core.getInput('max-retries') || '5', 10);
     const retryIntervalSeconds = parseInt(core.getInput('polling-interval') || '60', 10);
+    const fullDetailsSummary = core.getInput('full-details-summary') === 'true';
 
     let sha = '';
 
@@ -65,7 +66,7 @@ export async function run(): Promise<void> {
       setFailed('❌ Some checks are still running, but we are not retrying anymore.');
     }
 
-    await report.print();
+    await report.print(fullDetailsSummary);
   } catch (error) {
     core.error((error as Error).stack || '');
     setFailed((error as Error).message);

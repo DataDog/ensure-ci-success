@@ -1,14 +1,16 @@
 import { jest } from '@jest/globals';
 
-const mockCore = {
-  getInput: jest.fn(name => {
-    if (name === 'ignored-name-patterns') {
-      return 'ignored-job';
-    } else if (name === 'github-token') {
-      return 'Not a token';
-    } else {
-      return '';
-    }
+export const mockCore = {
+  mockedInputs: new Map<string, string>(),
+  resetMockedInputs() {
+    this.mockedInputs.clear();
+    this.mockInput('github-token', 'Not a token');
+  },
+  mockInput(name: string, value: string) {
+    this.mockedInputs.set(name, value);
+  },
+  getInput: jest.fn((name: string) => {
+    return mockCore.mockedInputs.get(name) || '';
   }),
   setOutput: jest.fn(),
   setFailed: jest.fn(),

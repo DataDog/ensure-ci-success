@@ -54,6 +54,7 @@ So do not forget to add the parameter `if: '!cancelled()'`; it will force the jo
 | `initial-delay-seconds`    | `5`                   |       Number of seconds to wait before the first check starts        |
 | `max-retries`              | `5`                   |    Maximum number of retries while waiting for checks to complete    |
 | `polling-interval-seconds` | `60`                  |              Number of seconds to wait between retries               |
+| `full-details-summary`     | `false`               |      Display the full list of observed jobs in workflow summary      |
 
 ```yml
 steps:

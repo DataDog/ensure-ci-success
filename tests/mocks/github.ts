@@ -27,6 +27,11 @@ export class MockGitHub {
     this.scope = nock('https://api.github.com');
   }
 
+  public setInput(name: string, value: string) {
+    process.env[`INPUT_${name.replace(/ /g, '_').toUpperCase()}`] = value;
+    return this;
+  }
+
   public setupContextWithPullRequest() {
     context.payload = {
       pull_request: {
@@ -95,6 +100,18 @@ export class MockGitHub {
       });
 
     return this;
+  }
+
+  public addFailedStatus() {
+    this.scope
+      .get('/repos/octo-org/example-repo/commits/abc123def456/status?per_page=100&page=1')
+      .reply(200, {
+        statuses: [
+          getCommitStatus({ context: 'failed-status', state: 'failure' }),
+          getCommitStatus({ context: 'good-status', state: 'success' }),
+        ],
+        total_count: 1,
+      });
   }
 
   public addEmptyCommitStatuses() {
@@ -191,5 +208,24 @@ export function getCheckRun({
       slug: 'github-actions',
       name: 'GitHub Actions',
     },
+  };
+}
+
+export function getCommitStatus({
+  id = 1,
+  context = 'ci/some-ci',
+  state = 'success',
+}: { id?: number; context?: string; state?: string } = {}) {
+  return {
+    url: 'https://api.github.com/repos/octocat/Hello-World/statuses/6dcb09b5b57875f334f61aebed695e2e4193db5e',
+    avatar_url: 'https://github.com/images/error/hubot_happy.gif',
+    id: id,
+    node_id: 'MDY6U3RhdHVzMQ==',
+    state: state,
+    description: 'Build has completed successfully',
+    target_url: 'https://ci.example.com/1000/output',
+    context: context,
+    created_at: '2012-07-20T01:19:13Z',
+    updated_at: '2012-07-20T01:19:13Z',
   };
 }

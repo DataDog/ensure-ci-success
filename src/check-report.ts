@@ -191,12 +191,30 @@ export class CheckReport {
     }
   }
 
-  async print(): Promise<void> {
-    const header =
+  async print(fullDetails: boolean): Promise<void> {
+    let header = '';
+    let itemsToShow = this.items;
+
+    if (!fullDetails) {
+      const ignoredCount = itemsToShow.filter(
+        item => item.interpreted === Interpretation.Ignored
+      ).length;
+      const successCount = itemsToShow.filter(
+        item => item.interpreted === Interpretation.Success
+      ).length;
+      itemsToShow = itemsToShow.filter(
+        item =>
+          item.interpreted === Interpretation.Failure ||
+          item.interpreted === Interpretation.StillRunning
+      );
+      header += `\n> ℹ️ ${successCount} successful, ${ignoredCount} ignored. Enable "Full details" to see them.\n\n`;
+    }
+
+    const tableHeader =
       '| Check Name | Source | Start Time | Duration | Status | Interpreted as |\n' +
       '|------------|--------|------------|----------|--------|----------------|\n';
 
-    const markdownRows = this.items
+    const markdownRows = itemsToShow
       .map(row => {
         const durationSeconds = row.duration != null ? `${Math.round(row.duration)}s` : '-';
         const nameLink = row.url ? `[${row.name}](${row.url})` : row.name;
@@ -205,14 +223,14 @@ export class CheckReport {
       })
       .join('\n');
 
-    const fullTable = header + markdownRows + '\n';
+    const fullSummary = header + tableHeader + markdownRows + '\n';
 
     const summaryPath = process.env.GITHUB_STEP_SUMMARY;
     if (summaryPath) {
-      await fs.promises.appendFile(summaryPath, fullTable, 'utf8');
+      await fs.promises.appendFile(summaryPath, fullSummary, 'utf8');
     } else {
       core.info('GITHUB_STEP_SUMMARY not available');
-      core.info(fullTable);
+      core.info(fullSummary);
     }
   }
 }
