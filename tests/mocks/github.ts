@@ -112,6 +112,7 @@ export class MockGitHub {
         ],
         total_count: 2,
       });
+    return this;
   }
 
   public addEmptyCommitStatuses() {
