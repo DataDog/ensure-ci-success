@@ -20,7 +20,7 @@
     "test": "node --experimental-vm-modules node_modules/.bin/jest --coverage"
   },
   "dependencies": {
-    "@actions/core": "^1.11.1",
+    "@actions/core": "^3.0.0",
     "@actions/github": "^5.0.3",
     "@octokit/rest": "^21.1.1"
   },
