@@ -112708,7 +112708,7 @@ async function run() {
         const ignoredNamePatterns = coreExports.getInput('ignored-name-patterns') || '';
         const initialDelaySeconds = parseInt(coreExports.getInput('initial-delay-seconds') || '5', 10);
         const maxRetries = parseInt(coreExports.getInput('max-retries') || '5', 10);
-        const retryIntervalSeconds = parseInt(coreExports.getInput('polling-interval') || '60', 10);
+        const retryIntervalSeconds = parseInt(coreExports.getInput('polling-interval-seconds') || '60', 10);
         const fullDetailsSummary = coreExports.getInput('full-details-summary') === 'true';
         let sha = '';
         if (pr) {
