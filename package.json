@@ -30,7 +30,7 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.1",
-    "@types/jest": "^29.5.14",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.17.31",
     "@typescript-eslint/eslint-plugin": "^8.31.0",
     "eslint": "^9.26.0",
