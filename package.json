@@ -42,8 +42,47 @@
     "jest": "^29.7.0",
     "nock": "^14.0.4",
     "prettier": "^3.5.3",
-    "rollup": "^4.40.1",
+    "rollup": "^4.62.2",
     "ts-jest": "^29.3.2",
     "ts-node": "^10.9.2"
+  },
+  "overrides": {
+    "eslint": {
+      "ajv": "^6.15.0",
+      "minimatch": "^3.1.5"
+    },
+    "@typescript-eslint/eslint-plugin": {
+      "brace-expansion": "^2.0.3"
+    },
+    "eslint-plugin-jest": {
+      "brace-expansion": "^2.0.3"
+    },
+    "@istanbuljs/load-nyc-config": {
+      "js-yaml": "^3.14.2"
+    },
+    "@eslint/config-array": {
+      "minimatch": "^3.1.5"
+    },
+    "@eslint/eslintrc": {
+      "minimatch": "^3.1.5"
+    },
+    "eslint-plugin-import": {
+      "minimatch": "^3.1.5"
+    },
+    "glob": {
+      "minimatch": "^3.1.5"
+    },
+    "jake": {
+      "minimatch": "^3.1.5"
+    },
+    "test-exclude": {
+      "minimatch": "^3.1.5"
+    },
+    "@rollup/plugin-commonjs": {
+      "picomatch": "^4.0.5"
+    },
+    "@rollup/pluginutils": {
+      "picomatch": "^4.0.5"
+    }
   }
 }
