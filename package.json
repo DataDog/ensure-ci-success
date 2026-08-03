@@ -45,5 +45,67 @@
     "rollup": "^4.40.1",
     "ts-jest": "^29.3.2",
     "ts-node": "^10.9.2"
+  },
+  "overrides": {
+    "eslint": {
+      "@modelcontextprotocol/sdk": {
+        "express-rate-limit": {
+          "express": {
+            "router": {
+              "path-to-regexp": "^8.4.2"
+            }
+          }
+        },
+        "express": {
+          "router": {
+            "path-to-regexp": "^8.4.2"
+          }
+        }
+      },
+      "ajv": "^6.15.0"
+    },
+    "jake": {
+      "brace-expansion": "^1.1.18",
+      "minimatch": "^3.1.5"
+    },
+    "@typescript-eslint/eslint-plugin": {
+      "@typescript-eslint/parser": {
+        "@typescript-eslint/typescript-estree": {
+          "minimatch": {
+            ".": "^9.0.9"
+          }
+        }
+      },
+      "@typescript-eslint/type-utils": {
+        "@typescript-eslint/typescript-estree": {
+          "minimatch": {
+            ".": "^9.0.9"
+          }
+        },
+        "@typescript-eslint/utils": {
+          "@typescript-eslint/typescript-estree": {
+            "minimatch": {
+              ".": "^9.0.9"
+            }
+          }
+        }
+      },
+      "@typescript-eslint/utils": {
+        "@typescript-eslint/typescript-estree": {
+          "minimatch": {
+            ".": "^9.0.9"
+          }
+        }
+      }
+    },
+    "eslint-plugin-jest": {
+      "@typescript-eslint/utils": {
+        "@typescript-eslint/typescript-estree": {
+          "minimatch": {
+            ".": "^9.0.9"
+          }
+        }
+      }
+    }
   }
 }
