@@ -16,7 +16,7 @@ export async function run(): Promise<void> {
     const ignoredNamePatterns = core.getInput('ignored-name-patterns') || '';
     const initialDelaySeconds = parseInt(core.getInput('initial-delay-seconds') || '5', 10);
     const maxRetries = parseInt(core.getInput('max-retries') || '5', 10);
-    const retryIntervalSeconds = parseInt(core.getInput('polling-interval') || '60', 10);
+    const retryIntervalSeconds = parseInt(core.getInput('polling-interval-seconds') || '60', 10);
     const fullDetailsSummary = core.getInput('full-details-summary') === 'true';
 
     let sha = '';
