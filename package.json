@@ -65,7 +65,7 @@
       "ajv": "^6.15.0"
     },
     "jake": {
-      "brace-expansion": "^1.1.18",
+      "brace-expansion": "^1.1.21",
       "minimatch": "^3.1.5"
     },
     "@typescript-eslint/eslint-plugin": {
@@ -103,6 +103,1272 @@
         "@typescript-eslint/typescript-estree": {
           "minimatch": {
             ".": "^9.0.9"
+          }
+        }
+      }
+    },
+    "filelist": {
+      "brace-expansion": "^1.1.21"
+    },
+    "jest": {
+      "@jest/core": {
+        "@jest/reporters": {
+          "@jest/transform": {
+            "babel-plugin-istanbul": {
+              "test-exclude": {
+                "glob": {
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                },
+                "minimatch": {
+                  "brace-expansion": "^1.1.21"
+                }
+              }
+            }
+          },
+          "glob": {
+            "minimatch": {
+              "brace-expansion": "^1.1.21"
+            }
+          }
+        },
+        "@jest/transform": {
+          "babel-plugin-istanbul": {
+            "test-exclude": {
+              "glob": {
+                "minimatch": {
+                  "brace-expansion": "^1.1.21"
+                }
+              },
+              "minimatch": {
+                "brace-expansion": "^1.1.21"
+              }
+            }
+          }
+        },
+        "jest-config": {
+          "babel-jest": {
+            "@jest/transform": {
+              "babel-plugin-istanbul": {
+                "test-exclude": {
+                  "glob": {
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  },
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                }
+              }
+            },
+            "babel-plugin-istanbul": {
+              "test-exclude": {
+                "glob": {
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                },
+                "minimatch": {
+                  "brace-expansion": "^1.1.21"
+                }
+              }
+            }
+          },
+          "glob": {
+            "minimatch": {
+              "brace-expansion": "^1.1.21"
+            }
+          },
+          "jest-circus": {
+            "@jest/expect": {
+              "jest-snapshot": {
+                "@jest/transform": {
+                  "babel-plugin-istanbul": {
+                    "test-exclude": {
+                      "glob": {
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      },
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "jest-runtime": {
+              "@jest/globals": {
+                "@jest/expect": {
+                  "jest-snapshot": {
+                    "@jest/transform": {
+                      "babel-plugin-istanbul": {
+                        "test-exclude": {
+                          "glob": {
+                            "minimatch": {
+                              "brace-expansion": "^1.1.21"
+                            }
+                          },
+                          "minimatch": {
+                            "brace-expansion": "^1.1.21"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "@jest/transform": {
+                "babel-plugin-istanbul": {
+                  "test-exclude": {
+                    "glob": {
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    },
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  }
+                }
+              },
+              "glob": {
+                "minimatch": {
+                  "brace-expansion": "^1.1.21"
+                }
+              },
+              "jest-snapshot": {
+                "@jest/transform": {
+                  "babel-plugin-istanbul": {
+                    "test-exclude": {
+                      "glob": {
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      },
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "jest-snapshot": {
+              "@jest/transform": {
+                "babel-plugin-istanbul": {
+                  "test-exclude": {
+                    "glob": {
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    },
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "jest-runner": {
+            "@jest/transform": {
+              "babel-plugin-istanbul": {
+                "test-exclude": {
+                  "glob": {
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  },
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                }
+              }
+            },
+            "jest-runtime": {
+              "@jest/globals": {
+                "@jest/expect": {
+                  "jest-snapshot": {
+                    "@jest/transform": {
+                      "babel-plugin-istanbul": {
+                        "test-exclude": {
+                          "glob": {
+                            "minimatch": {
+                              "brace-expansion": "^1.1.21"
+                            }
+                          },
+                          "minimatch": {
+                            "brace-expansion": "^1.1.21"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "@jest/transform": {
+                "babel-plugin-istanbul": {
+                  "test-exclude": {
+                    "glob": {
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    },
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  }
+                }
+              },
+              "glob": {
+                "minimatch": {
+                  "brace-expansion": "^1.1.21"
+                }
+              },
+              "jest-snapshot": {
+                "@jest/transform": {
+                  "babel-plugin-istanbul": {
+                    "test-exclude": {
+                      "glob": {
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      },
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "jest-resolve-dependencies": {
+          "jest-snapshot": {
+            "@jest/transform": {
+              "babel-plugin-istanbul": {
+                "test-exclude": {
+                  "glob": {
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  },
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "jest-runner": {
+          "@jest/transform": {
+            "babel-plugin-istanbul": {
+              "test-exclude": {
+                "glob": {
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                },
+                "minimatch": {
+                  "brace-expansion": "^1.1.21"
+                }
+              }
+            }
+          },
+          "jest-runtime": {
+            "@jest/globals": {
+              "@jest/expect": {
+                "jest-snapshot": {
+                  "@jest/transform": {
+                    "babel-plugin-istanbul": {
+                      "test-exclude": {
+                        "glob": {
+                          "minimatch": {
+                            "brace-expansion": "^1.1.21"
+                          }
+                        },
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "@jest/transform": {
+              "babel-plugin-istanbul": {
+                "test-exclude": {
+                  "glob": {
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  },
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                }
+              }
+            },
+            "glob": {
+              "minimatch": {
+                "brace-expansion": "^1.1.21"
+              }
+            },
+            "jest-snapshot": {
+              "@jest/transform": {
+                "babel-plugin-istanbul": {
+                  "test-exclude": {
+                    "glob": {
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    },
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "jest-runtime": {
+          "@jest/globals": {
+            "@jest/expect": {
+              "jest-snapshot": {
+                "@jest/transform": {
+                  "babel-plugin-istanbul": {
+                    "test-exclude": {
+                      "glob": {
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      },
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "@jest/transform": {
+            "babel-plugin-istanbul": {
+              "test-exclude": {
+                "glob": {
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                },
+                "minimatch": {
+                  "brace-expansion": "^1.1.21"
+                }
+              }
+            }
+          },
+          "glob": {
+            "minimatch": {
+              "brace-expansion": "^1.1.21"
+            }
+          },
+          "jest-snapshot": {
+            "@jest/transform": {
+              "babel-plugin-istanbul": {
+                "test-exclude": {
+                  "glob": {
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  },
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "jest-snapshot": {
+          "@jest/transform": {
+            "babel-plugin-istanbul": {
+              "test-exclude": {
+                "glob": {
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                },
+                "minimatch": {
+                  "brace-expansion": "^1.1.21"
+                }
+              }
+            }
+          }
+        }
+      },
+      "jest-cli": {
+        "@jest/core": {
+          "@jest/reporters": {
+            "@jest/transform": {
+              "babel-plugin-istanbul": {
+                "test-exclude": {
+                  "glob": {
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  },
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                }
+              }
+            },
+            "glob": {
+              "minimatch": {
+                "brace-expansion": "^1.1.21"
+              }
+            }
+          },
+          "@jest/transform": {
+            "babel-plugin-istanbul": {
+              "test-exclude": {
+                "glob": {
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                },
+                "minimatch": {
+                  "brace-expansion": "^1.1.21"
+                }
+              }
+            }
+          },
+          "jest-config": {
+            "babel-jest": {
+              "@jest/transform": {
+                "babel-plugin-istanbul": {
+                  "test-exclude": {
+                    "glob": {
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    },
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  }
+                }
+              },
+              "babel-plugin-istanbul": {
+                "test-exclude": {
+                  "glob": {
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  },
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                }
+              }
+            },
+            "glob": {
+              "minimatch": {
+                "brace-expansion": "^1.1.21"
+              }
+            },
+            "jest-circus": {
+              "@jest/expect": {
+                "jest-snapshot": {
+                  "@jest/transform": {
+                    "babel-plugin-istanbul": {
+                      "test-exclude": {
+                        "glob": {
+                          "minimatch": {
+                            "brace-expansion": "^1.1.21"
+                          }
+                        },
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "jest-runtime": {
+                "@jest/globals": {
+                  "@jest/expect": {
+                    "jest-snapshot": {
+                      "@jest/transform": {
+                        "babel-plugin-istanbul": {
+                          "test-exclude": {
+                            "glob": {
+                              "minimatch": {
+                                "brace-expansion": "^1.1.21"
+                              }
+                            },
+                            "minimatch": {
+                              "brace-expansion": "^1.1.21"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "@jest/transform": {
+                  "babel-plugin-istanbul": {
+                    "test-exclude": {
+                      "glob": {
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      },
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    }
+                  }
+                },
+                "glob": {
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                },
+                "jest-snapshot": {
+                  "@jest/transform": {
+                    "babel-plugin-istanbul": {
+                      "test-exclude": {
+                        "glob": {
+                          "minimatch": {
+                            "brace-expansion": "^1.1.21"
+                          }
+                        },
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "jest-snapshot": {
+                "@jest/transform": {
+                  "babel-plugin-istanbul": {
+                    "test-exclude": {
+                      "glob": {
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      },
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "jest-runner": {
+              "@jest/transform": {
+                "babel-plugin-istanbul": {
+                  "test-exclude": {
+                    "glob": {
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    },
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  }
+                }
+              },
+              "jest-runtime": {
+                "@jest/globals": {
+                  "@jest/expect": {
+                    "jest-snapshot": {
+                      "@jest/transform": {
+                        "babel-plugin-istanbul": {
+                          "test-exclude": {
+                            "glob": {
+                              "minimatch": {
+                                "brace-expansion": "^1.1.21"
+                              }
+                            },
+                            "minimatch": {
+                              "brace-expansion": "^1.1.21"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "@jest/transform": {
+                  "babel-plugin-istanbul": {
+                    "test-exclude": {
+                      "glob": {
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      },
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    }
+                  }
+                },
+                "glob": {
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                },
+                "jest-snapshot": {
+                  "@jest/transform": {
+                    "babel-plugin-istanbul": {
+                      "test-exclude": {
+                        "glob": {
+                          "minimatch": {
+                            "brace-expansion": "^1.1.21"
+                          }
+                        },
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "jest-resolve-dependencies": {
+            "jest-snapshot": {
+              "@jest/transform": {
+                "babel-plugin-istanbul": {
+                  "test-exclude": {
+                    "glob": {
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    },
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "jest-runner": {
+            "@jest/transform": {
+              "babel-plugin-istanbul": {
+                "test-exclude": {
+                  "glob": {
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  },
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                }
+              }
+            },
+            "jest-runtime": {
+              "@jest/globals": {
+                "@jest/expect": {
+                  "jest-snapshot": {
+                    "@jest/transform": {
+                      "babel-plugin-istanbul": {
+                        "test-exclude": {
+                          "glob": {
+                            "minimatch": {
+                              "brace-expansion": "^1.1.21"
+                            }
+                          },
+                          "minimatch": {
+                            "brace-expansion": "^1.1.21"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "@jest/transform": {
+                "babel-plugin-istanbul": {
+                  "test-exclude": {
+                    "glob": {
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    },
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  }
+                }
+              },
+              "glob": {
+                "minimatch": {
+                  "brace-expansion": "^1.1.21"
+                }
+              },
+              "jest-snapshot": {
+                "@jest/transform": {
+                  "babel-plugin-istanbul": {
+                    "test-exclude": {
+                      "glob": {
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      },
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "jest-runtime": {
+            "@jest/globals": {
+              "@jest/expect": {
+                "jest-snapshot": {
+                  "@jest/transform": {
+                    "babel-plugin-istanbul": {
+                      "test-exclude": {
+                        "glob": {
+                          "minimatch": {
+                            "brace-expansion": "^1.1.21"
+                          }
+                        },
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "@jest/transform": {
+              "babel-plugin-istanbul": {
+                "test-exclude": {
+                  "glob": {
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  },
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                }
+              }
+            },
+            "glob": {
+              "minimatch": {
+                "brace-expansion": "^1.1.21"
+              }
+            },
+            "jest-snapshot": {
+              "@jest/transform": {
+                "babel-plugin-istanbul": {
+                  "test-exclude": {
+                    "glob": {
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    },
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "jest-snapshot": {
+            "@jest/transform": {
+              "babel-plugin-istanbul": {
+                "test-exclude": {
+                  "glob": {
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  },
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "create-jest": {
+          "jest-config": {
+            "babel-jest": {
+              "@jest/transform": {
+                "babel-plugin-istanbul": {
+                  "test-exclude": {
+                    "glob": {
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    },
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  }
+                }
+              },
+              "babel-plugin-istanbul": {
+                "test-exclude": {
+                  "glob": {
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  },
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                }
+              }
+            },
+            "glob": {
+              "minimatch": {
+                "brace-expansion": "^1.1.21"
+              }
+            },
+            "jest-circus": {
+              "@jest/expect": {
+                "jest-snapshot": {
+                  "@jest/transform": {
+                    "babel-plugin-istanbul": {
+                      "test-exclude": {
+                        "glob": {
+                          "minimatch": {
+                            "brace-expansion": "^1.1.21"
+                          }
+                        },
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "jest-runtime": {
+                "@jest/globals": {
+                  "@jest/expect": {
+                    "jest-snapshot": {
+                      "@jest/transform": {
+                        "babel-plugin-istanbul": {
+                          "test-exclude": {
+                            "glob": {
+                              "minimatch": {
+                                "brace-expansion": "^1.1.21"
+                              }
+                            },
+                            "minimatch": {
+                              "brace-expansion": "^1.1.21"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "@jest/transform": {
+                  "babel-plugin-istanbul": {
+                    "test-exclude": {
+                      "glob": {
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      },
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    }
+                  }
+                },
+                "glob": {
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                },
+                "jest-snapshot": {
+                  "@jest/transform": {
+                    "babel-plugin-istanbul": {
+                      "test-exclude": {
+                        "glob": {
+                          "minimatch": {
+                            "brace-expansion": "^1.1.21"
+                          }
+                        },
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "jest-snapshot": {
+                "@jest/transform": {
+                  "babel-plugin-istanbul": {
+                    "test-exclude": {
+                      "glob": {
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      },
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "jest-runner": {
+              "@jest/transform": {
+                "babel-plugin-istanbul": {
+                  "test-exclude": {
+                    "glob": {
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    },
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  }
+                }
+              },
+              "jest-runtime": {
+                "@jest/globals": {
+                  "@jest/expect": {
+                    "jest-snapshot": {
+                      "@jest/transform": {
+                        "babel-plugin-istanbul": {
+                          "test-exclude": {
+                            "glob": {
+                              "minimatch": {
+                                "brace-expansion": "^1.1.21"
+                              }
+                            },
+                            "minimatch": {
+                              "brace-expansion": "^1.1.21"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "@jest/transform": {
+                  "babel-plugin-istanbul": {
+                    "test-exclude": {
+                      "glob": {
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      },
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    }
+                  }
+                },
+                "glob": {
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                },
+                "jest-snapshot": {
+                  "@jest/transform": {
+                    "babel-plugin-istanbul": {
+                      "test-exclude": {
+                        "glob": {
+                          "minimatch": {
+                            "brace-expansion": "^1.1.21"
+                          }
+                        },
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "jest-config": {
+          "babel-jest": {
+            "@jest/transform": {
+              "babel-plugin-istanbul": {
+                "test-exclude": {
+                  "glob": {
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  },
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                }
+              }
+            },
+            "babel-plugin-istanbul": {
+              "test-exclude": {
+                "glob": {
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                },
+                "minimatch": {
+                  "brace-expansion": "^1.1.21"
+                }
+              }
+            }
+          },
+          "glob": {
+            "minimatch": {
+              "brace-expansion": "^1.1.21"
+            }
+          },
+          "jest-circus": {
+            "@jest/expect": {
+              "jest-snapshot": {
+                "@jest/transform": {
+                  "babel-plugin-istanbul": {
+                    "test-exclude": {
+                      "glob": {
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      },
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "jest-runtime": {
+              "@jest/globals": {
+                "@jest/expect": {
+                  "jest-snapshot": {
+                    "@jest/transform": {
+                      "babel-plugin-istanbul": {
+                        "test-exclude": {
+                          "glob": {
+                            "minimatch": {
+                              "brace-expansion": "^1.1.21"
+                            }
+                          },
+                          "minimatch": {
+                            "brace-expansion": "^1.1.21"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "@jest/transform": {
+                "babel-plugin-istanbul": {
+                  "test-exclude": {
+                    "glob": {
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    },
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  }
+                }
+              },
+              "glob": {
+                "minimatch": {
+                  "brace-expansion": "^1.1.21"
+                }
+              },
+              "jest-snapshot": {
+                "@jest/transform": {
+                  "babel-plugin-istanbul": {
+                    "test-exclude": {
+                      "glob": {
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      },
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "jest-snapshot": {
+              "@jest/transform": {
+                "babel-plugin-istanbul": {
+                  "test-exclude": {
+                    "glob": {
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    },
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "jest-runner": {
+            "@jest/transform": {
+              "babel-plugin-istanbul": {
+                "test-exclude": {
+                  "glob": {
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  },
+                  "minimatch": {
+                    "brace-expansion": "^1.1.21"
+                  }
+                }
+              }
+            },
+            "jest-runtime": {
+              "@jest/globals": {
+                "@jest/expect": {
+                  "jest-snapshot": {
+                    "@jest/transform": {
+                      "babel-plugin-istanbul": {
+                        "test-exclude": {
+                          "glob": {
+                            "minimatch": {
+                              "brace-expansion": "^1.1.21"
+                            }
+                          },
+                          "minimatch": {
+                            "brace-expansion": "^1.1.21"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "@jest/transform": {
+                "babel-plugin-istanbul": {
+                  "test-exclude": {
+                    "glob": {
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    },
+                    "minimatch": {
+                      "brace-expansion": "^1.1.21"
+                    }
+                  }
+                }
+              },
+              "glob": {
+                "minimatch": {
+                  "brace-expansion": "^1.1.21"
+                }
+              },
+              "jest-snapshot": {
+                "@jest/transform": {
+                  "babel-plugin-istanbul": {
+                    "test-exclude": {
+                      "glob": {
+                        "minimatch": {
+                          "brace-expansion": "^1.1.21"
+                        }
+                      },
+                      "minimatch": {
+                        "brace-expansion": "^1.1.21"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ts-jest": {
+      "@jest/transform": {
+        "babel-plugin-istanbul": {
+          "test-exclude": {
+            "glob": {
+              "minimatch": {
+                "brace-expansion": "^1.1.21"
+              }
+            },
+            "minimatch": {
+              "brace-expansion": "^1.1.21"
+            }
+          }
+        }
+      },
+      "babel-jest": {
+        "@jest/transform": {
+          "babel-plugin-istanbul": {
+            "test-exclude": {
+              "glob": {
+                "minimatch": {
+                  "brace-expansion": "^1.1.21"
+                }
+              },
+              "minimatch": {
+                "brace-expansion": "^1.1.21"
+              }
+            }
+          }
+        },
+        "babel-plugin-istanbul": {
+          "test-exclude": {
+            "glob": {
+              "minimatch": {
+                "brace-expansion": "^1.1.21"
+              }
+            },
+            "minimatch": {
+              "brace-expansion": "^1.1.21"
+            }
+          }
+        }
+      },
+      "ejs": {
+        "jake": {
+          "minimatch": {
+            "brace-expansion": "^1.1.21"
           }
         }
       }
