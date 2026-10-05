@@ -42,7 +42,7 @@
     "jest": "^29.7.0",
     "nock": "^14.0.4",
     "prettier": "^3.5.3",
-    "rollup": "^4.40.1",
+    "rollup": "^4.63.5",
     "ts-jest": "^29.3.2",
     "ts-node": "^10.9.2"
   },
@@ -53,12 +53,20 @@
           "express": {
             "router": {
               "path-to-regexp": "^8.4.2"
+            },
+            "qs": "^6.16.0",
+            "body-parser": {
+              "qs": "^6.16.0"
             }
           }
         },
         "express": {
           "router": {
             "path-to-regexp": "^8.4.2"
+          },
+          "qs": "^6.16.0",
+          "body-parser": {
+            "qs": "^6.16.0"
           }
         }
       },
