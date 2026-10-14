@@ -25,6 +25,15 @@ inputs:
     description: 'True to display all checks in job summary, false to display only failed checks'
     required: false
     default: 'false'
+  ignore-check-runs-from-other-pull-requests:
+    description: >-
+      True to ignore check runs that were produced by workflows running against
+      a fork repository and do not belong to this pull request. Useful when a
+      fork PR and an in-repo shadow PR share the same head commit, so both
+      report identically-named check runs on it. Requires the token to be able
+      to read workflow runs (actions: read).
+    required: false
+    default: 'false'
 runs:
   using: 'node20'
   main: 'dist/index.js'

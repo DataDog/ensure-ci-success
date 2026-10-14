@@ -38,7 +38,8 @@ export class SummaryRow {
   static fromCheck(
     check: CheckRunType,
     ignoredNameRegexps: RegExp[],
-    currentJobName: string
+    currentJobName: string,
+    ignore = false
   ): SummaryRow {
     const duration =
       check.started_at && check.completed_at
@@ -48,7 +49,9 @@ export class SummaryRow {
     let interpreted: Interpretation = Interpretation.Failure;
     const status = check.conclusion ?? check.status ?? 'unknown';
 
-    if (check.name === currentJobName && check.app?.slug === 'github-actions') {
+    if (ignore) {
+      interpreted = Interpretation.Ignored;
+    } else if (check.name === currentJobName && check.app?.slug === 'github-actions') {
       interpreted = Interpretation.CurrentJob;
     } else if (ignoredNameRegexps.some(regex => regex.test(check.name))) {
       interpreted = Interpretation.Ignored;

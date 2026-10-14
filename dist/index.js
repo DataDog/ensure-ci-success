@@ -112782,6 +112782,7 @@ async function run() {
         const maxRetries = parseInt(coreExports.getInput('max-retries') || '5', 10);
         const retryIntervalSeconds = parseInt(coreExports.getInput('polling-interval-seconds') || coreExports.getInput('polling-interval') || '60', 10);
         const fullDetailsSummary = coreExports.getInput('full-details-summary') === 'true';
+        const ignoreForeignCheckRuns = coreExports.getInput('ignore-check-runs-from-other-pull-requests') === 'true';
         let sha = '';
         if (pr) {
             sha = pr.head.sha;
@@ -112791,7 +112792,7 @@ async function run() {
             sha = githubExports.context.sha;
             coreExports.info(`Checking CI statuses for commit: ${sha} on push event`);
         }
-        const report = new CheckReport(token, owner, repo, sha, ignoredNamePatterns, githubExports.context.job);
+        const report = new CheckReport(token, owner, repo, sha, ignoredNamePatterns, githubExports.context.job, pr?.head?.ref ?? null, ignoreForeignCheckRuns);
         const { data: run } = await report.octokit.rest.actions.getWorkflowRun({
             owner,
             repo,

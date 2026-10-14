@@ -21,6 +21,8 @@ export async function run(): Promise<void> {
       10
     );
     const fullDetailsSummary = core.getInput('full-details-summary') === 'true';
+    const ignoreForeignCheckRuns =
+      core.getInput('ignore-check-runs-from-other-pull-requests') === 'true';
 
     let sha = '';
 
@@ -38,7 +40,9 @@ export async function run(): Promise<void> {
       repo,
       sha,
       ignoredNamePatterns,
-      github.context.job
+      github.context.job,
+      pr?.head?.ref ?? null,
+      ignoreForeignCheckRuns
     );
 
     const { data: run } = await report.octokit.rest.actions.getWorkflowRun({

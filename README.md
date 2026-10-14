@@ -47,14 +47,15 @@ So do not forget to add the parameter `if: '!cancelled()'`; it will force the jo
 
 ## Inputs
 
-| Name                       | Default               |                             Description                              |
-| :------------------------- | :-------------------- | :------------------------------------------------------------------: |
-| `github-token`             | `${{ github.token }}` |                    GitHub token to access the API                    |
-| `ignored-name-patterns`    | (empty)               | List of regular expressions to ignore specific check or status names |
-| `initial-delay-seconds`    | `5`                   |       Number of seconds to wait before the first check starts        |
-| `max-retries`              | `5`                   |    Maximum number of retries while waiting for checks to complete    |
-| `polling-interval-seconds` | `60`                  |              Number of seconds to wait between retries               |
-| `full-details-summary`     | `false`               |      Display the full list of observed jobs in workflow summary      |
+| Name                                         | Default               |                                                    Description                                                    |
+| :------------------------------------------- | :-------------------- | :---------------------------------------------------------------------------------------------------------------: |
+| `github-token`                               | `${{ github.token }}` |                                          GitHub token to access the API                                           |
+| `ignored-name-patterns`                      | (empty)               |                       List of regular expressions to ignore specific check or status names                        |
+| `initial-delay-seconds`                      | `5`                   |                              Number of seconds to wait before the first check starts                              |
+| `max-retries`                                | `5`                   |                          Maximum number of retries while waiting for checks to complete                           |
+| `polling-interval-seconds`                   | `60`                  |                                     Number of seconds to wait between retries                                     |
+| `full-details-summary`                       | `false`               |                            Display the full list of observed jobs in workflow summary                             |
+| `ignore-check-runs-from-other-pull-requests` | `false`               | Ignore check runs produced by workflows running against a fork and not belonging to this pull request (see below) |
 
 ```yml
 steps:
@@ -74,6 +75,17 @@ steps:
 - Don't set a `job_name` to the job running this action (see why [here](docs/limitations.md))
 - Don't use the same name for another job (for the same reason)
 - If a job starts **after** the current job has already completed, it will not be processed. The `initial-delay-seconds` parameter helps reduce the likelihood of this issue but does not eliminate it entirely. You can also add a long-running job as a dependency for the job performing this action — just remember to include `if: always()` to ensure it isn't skipped. In all cases, make sure to carefully read the documentation about [implementation strategies](docs/implementation.md).
+
+### Shadow PRs sharing a head commit
+
+Check runs are enumerated per **commit**, not per pull request. When a fork PR and an in-repo
+"shadow" PR point at the same head commit, both report identically-named check runs on it, and a
+stale failing run from the fork can fail the gate of the shadow PR. Set
+`ignore-check-runs-from-other-pull-requests: true` to drop check runs that were produced by
+workflows running against a fork and do not belong to the pull request being evaluated. Fork PRs
+being evaluated directly are unaffected: their own runs carry the PR head branch and stay
+enforced. Resolving the origin of a check run calls the workflow runs API, so the token needs
+`actions: read`.
 
 ---
 
