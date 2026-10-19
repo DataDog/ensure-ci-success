@@ -16,8 +16,13 @@ export async function run(): Promise<void> {
     const ignoredNamePatterns = core.getInput('ignored-name-patterns') || '';
     const initialDelaySeconds = parseInt(core.getInput('initial-delay-seconds') || '5', 10);
     const maxRetries = parseInt(core.getInput('max-retries') || '5', 10);
-    const retryIntervalSeconds = parseInt(core.getInput('polling-interval') || '60', 10);
+    const retryIntervalSeconds = parseInt(
+      core.getInput('polling-interval-seconds') || core.getInput('polling-interval') || '60',
+      10
+    );
     const fullDetailsSummary = core.getInput('full-details-summary') === 'true';
+    const ignoreForeignCheckRuns =
+      core.getInput('ignore-check-runs-from-other-pull-requests') === 'true';
 
     let sha = '';
 
@@ -35,7 +40,9 @@ export async function run(): Promise<void> {
       repo,
       sha,
       ignoredNamePatterns,
-      github.context.job
+      github.context.job,
+      pr?.head?.ref ?? null,
+      ignoreForeignCheckRuns
     );
 
     const { data: run } = await report.octokit.rest.actions.getWorkflowRun({

@@ -32,12 +32,13 @@ export class MockGitHub {
     return this;
   }
 
-  public setupContextWithPullRequest() {
+  public setupContextWithPullRequest({ headRef = 'pr-branch' }: { headRef?: string } = {}) {
     context.payload = {
       pull_request: {
         number: 42,
         head: {
           sha: 'abc123def456',
+          ref: headRef,
         },
       },
     };
@@ -58,9 +59,10 @@ export class MockGitHub {
     return this;
   }
 
-  public addCheckSuite() {
+  public addCheckSuite({ times = 1 }: { times?: number } = {}) {
     this.scope
       .get('/repos/octo-org/example-repo/commits/abc123def456/check-suites?per_page=100')
+      .times(times)
       .reply(200, {
         total_count: 1,
         check_suites: [getCheckSuite(), getCheckSuite({ id: 666, latest_check_runs_count: 0 })],
@@ -102,6 +104,111 @@ export class MockGitHub {
     return this;
   }
 
+  /**
+   * Simulates a commit shared by a fork PR and an in-repo PR: the suite
+   * carries a failing run from the fork and a successful run from the
+   * repository, both named 'some-job'.
+   */
+  public addForeignAndLocalCheckRuns() {
+    this.scope
+      .get('/repos/octo-org/example-repo/check-suites/1234567890/check-runs?per_page=100')
+      .reply(200, {
+        total_count: 2,
+        check_runs: [
+          getCheckRun(), // current job
+          getCheckRun({
+            id: 7,
+            name: 'some-job',
+            conclusion: 'failure',
+            html_url: 'https://github.com/octo-org/example-repo/actions/runs/999/job/1000',
+          }),
+          getCheckRun({
+            id: 2,
+            name: 'some-job',
+            conclusion: 'success',
+            html_url: 'https://github.com/octo-org/example-repo/actions/runs/1001/job/1002',
+          }),
+        ],
+      });
+
+    return this;
+  }
+
+  /** Declares where mocked workflow runs 999 (fork) and 1001 (repository) ran. */
+  public addWorkflowRunOrigins() {
+    this.scope.get('/repos/octo-org/example-repo/actions/runs/999').reply(200, {
+      ...getActionRun(),
+      id: 999,
+      head_branch: 'fork-branch',
+      head_repository: { ...getRepository(), full_name: 'forker/example-repo' },
+    });
+    this.scope.get('/repos/octo-org/example-repo/actions/runs/1001').reply(200, {
+      ...getActionRun(),
+      id: 1001,
+      head_branch: 'pr-branch',
+      head_repository: getRepository(),
+    });
+
+    return this;
+  }
+
+  /** Check runs the action cannot attribute to a workflow run. */
+  public addUnattributableCheckRuns() {
+    this.scope
+      .get('/repos/octo-org/example-repo/check-suites/1234567890/check-runs?per_page=100')
+      .reply(200, {
+        total_count: 3,
+        check_runs: [
+          getCheckRun(), // current job
+          // third-party app: no workflow run to resolve
+          getCheckRun({
+            id: 3,
+            name: 'external-ci',
+            conclusion: 'failure',
+            appSlug: 'circleci',
+            html_url: 'https://circleci.com/gh/octo-org/example-repo/42',
+          }),
+          // GitHub Actions run whose URL carries no workflow run id
+          getCheckRun({
+            id: 4,
+            name: 'mystery-job',
+            conclusion: 'failure',
+            html_url: 'https://github.com/octo-org/example-repo/commit/abc123def456/checks/4',
+          }),
+        ],
+      });
+
+    return this;
+  }
+
+  /** A foreign failing run plus a local run that is still in progress. */
+  public addForeignAndPendingCheckRuns({ times = 1 }: { times?: number } = {}) {
+    this.scope
+      .get('/repos/octo-org/example-repo/check-suites/1234567890/check-runs?per_page=100')
+      .times(times)
+      .reply(200, {
+        total_count: 3,
+        check_runs: [
+          getCheckRun(), // current job
+          getCheckRun({
+            id: 7,
+            name: 'some-job',
+            conclusion: 'failure',
+            html_url: 'https://github.com/octo-org/example-repo/actions/runs/999/job/1000',
+          }),
+          getCheckRun({
+            id: 8,
+            name: 'pending-job',
+            conclusion: null,
+            status: 'in_progress',
+            html_url: 'https://github.com/octo-org/example-repo/actions/runs/1001/job/1003',
+          }),
+        ],
+      });
+
+    return this;
+  }
+
   public addFailedStatus() {
     this.scope
       .get('/repos/octo-org/example-repo/commits/abc123def456/status?per_page=100&page=1')
@@ -115,9 +222,10 @@ export class MockGitHub {
     return this;
   }
 
-  public addEmptyCommitStatuses() {
+  public addEmptyCommitStatuses({ times = 1 }: { times?: number } = {}) {
     this.scope
       .get('/repos/octo-org/example-repo/commits/abc123def456/status?per_page=100&page=1')
+      .times(times)
       .reply(200, {
         statuses: [],
         total_count: 0,
@@ -157,6 +265,7 @@ export function getActionRun({ run_attempt = 1 }: { run_attempt?: number } = {})
   return {
     id: 123,
     head_sha: '',
+    head_branch: 'main',
     status: null,
     conclusion: null,
     name: '',
@@ -165,6 +274,7 @@ export function getActionRun({ run_attempt = 1 }: { run_attempt?: number } = {})
     event: '',
     actor: getActor(),
     repository: getRepository(),
+    head_repository: getRepository(),
     created_at: null,
     updated_at: null,
   };
@@ -195,19 +305,30 @@ export function getCheckRun({
   id = 1,
   name = 'ensure-ci-success',
   conclusion = 'success',
-}: { id?: number; name?: string; conclusion?: string } = {}) {
+  status = 'completed',
+  appSlug = 'github-actions',
+  html_url = 'https://github.com/octo-org/example-repo/actions/runs/123/job/456',
+}: {
+  id?: number;
+  name?: string;
+  conclusion?: string | null;
+  status?: string;
+  appSlug?: string;
+  html_url?: string;
+} = {}) {
   return {
     id: id,
     name: name,
     head_sha: 'abc123def456',
-    status: 'completed',
+    status: status,
     conclusion: conclusion,
     started_at: '2024-05-12T00:00:00Z',
     completed_at: '2024-05-12T00:05:00Z',
+    html_url: html_url,
     app: {
       id: 15368,
-      slug: 'github-actions',
-      name: 'GitHub Actions',
+      slug: appSlug,
+      name: appSlug,
     },
   };
 }

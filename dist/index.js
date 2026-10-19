@@ -112448,13 +112448,16 @@ class SummaryRow {
         this.duration = params.duration ?? null;
         this.url = params.url ?? null;
     }
-    static fromCheck(check, ignoredNameRegexps, currentJobName) {
+    static fromCheck(check, ignoredNameRegexps, currentJobName, ignore = false) {
         const duration = check.started_at && check.completed_at
             ? (new Date(check.completed_at).getTime() - new Date(check.started_at).getTime()) / 1000
             : null;
         let interpreted = Interpretation.Failure;
         const status = check.conclusion ?? check.status ?? 'unknown';
-        if (check.name === currentJobName && check.app?.slug === 'github-actions') {
+        if (ignore) {
+            interpreted = Interpretation.Ignored;
+        }
+        else if (check.name === currentJobName && check.app?.slug === 'github-actions') {
             interpreted = Interpretation.CurrentJob;
         }
         else if (ignoredNameRegexps.some(regex => regex.test(check.name))) {
@@ -112536,12 +112539,15 @@ class CheckReport {
     sha;
     ignoredNameRegexps;
     currentJobName;
+    currentHeadRef;
+    ignoreForeignCheckRuns;
     octokit;
     items = [];
+    workflowRunOrigins = new Map();
     containsFailure = false;
     stillRunning = false;
     shouldRetry = true;
-    constructor(token, owner, repo, sha, ignoredNamePatterns, currentJobName) {
+    constructor(token, owner, repo, sha, ignoredNamePatterns, currentJobName, currentHeadRef = null, ignoreForeignCheckRuns = false) {
         this.owner = owner;
         this.repo = repo;
         this.sha = sha;
@@ -112551,6 +112557,8 @@ class CheckReport {
             .filter(Boolean)
             .map(pattern => new RegExp(`^${pattern}$`));
         this.currentJobName = currentJobName;
+        this.currentHeadRef = currentHeadRef;
+        this.ignoreForeignCheckRuns = ignoreForeignCheckRuns;
         this.octokit = githubExports.getOctokit(token);
     }
     async fill() {
@@ -112562,6 +112570,7 @@ class CheckReport {
             per_page: 100,
         });
         const checkRuns = {};
+        const foreignCheckRuns = {};
         for (const suite of checkSuites) {
             if (suite.latest_check_runs_count === 0) {
                 coreExports.debug(`Check suite ${suite.id} has no check runs (${suite.url})`);
@@ -112575,27 +112584,33 @@ class CheckReport {
                     check_suite_id: suite.id,
                     per_page: 100,
                 });
-                subCheckRuns.forEach(checkRun => {
+                for (const checkRun of subCheckRuns) {
                     // dark corners of github API: there is no way to get "last check run" for a ref
                     // so we filter out them by app.id/names
                     if (checkRun.name.includes('${{')) {
                         // dark dark corners of github API: names can be not fully interpreted
                         // ignoring them
                         coreExports.debug(`Skipping GitHub Actions check run ${checkRun.html_url}`);
-                        return;
+                        continue;
                     }
+                    // Check runs are enumerated per commit, not per pull request, so a
+                    // commit shared by a fork PR and its in-repo shadow PR carries two
+                    // sets of identically-named runs. Keep them apart so the dedupe
+                    // below cannot let a stale fork run shadow the PR's own run.
+                    const isForeign = this.ignoreForeignCheckRuns && (await this.isForeignCheckRun(checkRun));
+                    const target = isForeign ? foreignCheckRuns : checkRuns;
                     const key = `${checkRun.app?.id}#${checkRun.name}`;
-                    if (key in checkRuns) {
+                    if (key in target) {
                         coreExports.debug(`Duplicate check run ${checkRun.html_url}`);
-                        if (checkRun.id > checkRuns[key].id) {
+                        if (checkRun.id > target[key].id) {
                             // pick the last one
-                            checkRuns[key] = checkRun;
+                            target[key] = checkRun;
                         }
                     }
                     else {
-                        checkRuns[key] = checkRun;
+                        target[key] = checkRun;
                     }
-                });
+                }
             }
         }
         coreExports.info(`Found ${Object.keys(checkRuns).length} check runs`);
@@ -112604,10 +112619,67 @@ class CheckReport {
         for (const check of Object.values(checkRuns)) {
             this.items.push(SummaryRow.fromCheck(check, this.ignoredNameRegexps, this.currentJobName));
         }
+        for (const check of Object.values(foreignCheckRuns)) {
+            coreExports.info(`* 🙈 Ignoring check run from another pull request: ${check.name} (${check.html_url})`);
+            this.items.push(SummaryRow.fromCheck(check, this.ignoredNameRegexps, this.currentJobName, true));
+        }
         for (const status of statuses) {
             this.items.push(SummaryRow.fromStatus(status, this.ignoredNameRegexps));
         }
         this.compute();
+    }
+    /**
+     * Returns true when the check run was produced by a workflow running against
+     * a fork repository and does not belong to the pull request under
+     * evaluation. Such runs happen when a fork PR and an in-repo shadow PR
+     * share the same head commit: both trigger identically-named check runs on
+     * that commit.
+     */
+    async isForeignCheckRun(checkRun) {
+        if (checkRun.app?.slug !== 'github-actions') {
+            // Third-party check runs carry no workflow run to attribute them with.
+            return false;
+        }
+        const runId = this.extractWorkflowRunId(checkRun.html_url);
+        if (runId === null) {
+            return false;
+        }
+        const origin = await this.getWorkflowRunOrigin(runId);
+        if (!origin) {
+            return false;
+        }
+        return (origin.headRepositoryFullName !== `${this.owner}/${this.repo}` &&
+            origin.headBranch !== this.currentHeadRef);
+    }
+    extractWorkflowRunId(htmlUrl) {
+        if (!htmlUrl) {
+            return null;
+        }
+        const match = htmlUrl.match(/\/actions\/runs\/(\d+)/);
+        return match ? match[1] : null;
+    }
+    async getWorkflowRunOrigin(runId) {
+        if (this.workflowRunOrigins.has(runId)) {
+            return this.workflowRunOrigins.get(runId) ?? null;
+        }
+        try {
+            const { data } = await this.octokit.rest.actions.getWorkflowRun({
+                owner: this.owner,
+                repo: this.repo,
+                run_id: parseInt(runId, 10),
+            });
+            const origin = {
+                headRepositoryFullName: data.head_repository?.full_name ?? null,
+                headBranch: data.head_branch ?? null,
+            };
+            this.workflowRunOrigins.set(runId, origin);
+            return origin;
+        }
+        catch (error) {
+            coreExports.warning(`Could not resolve workflow run ${runId} to attribute its check run: ${error}`);
+            this.workflowRunOrigins.set(runId, null);
+            return null;
+        }
     }
     async getAllCombinedStatuses() {
         const allStatuses = [];
@@ -112708,8 +112780,9 @@ async function run() {
         const ignoredNamePatterns = coreExports.getInput('ignored-name-patterns') || '';
         const initialDelaySeconds = parseInt(coreExports.getInput('initial-delay-seconds') || '5', 10);
         const maxRetries = parseInt(coreExports.getInput('max-retries') || '5', 10);
-        const retryIntervalSeconds = parseInt(coreExports.getInput('polling-interval') || '60', 10);
+        const retryIntervalSeconds = parseInt(coreExports.getInput('polling-interval-seconds') || coreExports.getInput('polling-interval') || '60', 10);
         const fullDetailsSummary = coreExports.getInput('full-details-summary') === 'true';
+        const ignoreForeignCheckRuns = coreExports.getInput('ignore-check-runs-from-other-pull-requests') === 'true';
         let sha = '';
         if (pr) {
             sha = pr.head.sha;
@@ -112719,7 +112792,7 @@ async function run() {
             sha = githubExports.context.sha;
             coreExports.info(`Checking CI statuses for commit: ${sha} on push event`);
         }
-        const report = new CheckReport(token, owner, repo, sha, ignoredNamePatterns, githubExports.context.job);
+        const report = new CheckReport(token, owner, repo, sha, ignoredNamePatterns, githubExports.context.job, pr?.head?.ref ?? null, ignoreForeignCheckRuns);
         const { data: run } = await report.octokit.rest.actions.getWorkflowRun({
             owner,
             repo,
