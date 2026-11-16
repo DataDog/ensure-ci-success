@@ -54,45 +54,6 @@
       "brace-expansion": "^1.1.21",
       "minimatch": "^3.1.5"
     },
-    "@typescript-eslint/eslint-plugin": {
-      "@typescript-eslint/parser": {
-        "@typescript-eslint/typescript-estree": {
-          "minimatch": {
-            ".": "^9.0.9"
-          }
-        }
-      },
-      "@typescript-eslint/type-utils": {
-        "@typescript-eslint/typescript-estree": {
-          "minimatch": {
-            ".": "^9.0.9"
-          }
-        },
-        "@typescript-eslint/utils": {
-          "@typescript-eslint/typescript-estree": {
-            "minimatch": {
-              ".": "^9.0.9"
-            }
-          }
-        }
-      },
-      "@typescript-eslint/utils": {
-        "@typescript-eslint/typescript-estree": {
-          "minimatch": {
-            ".": "^9.0.9"
-          }
-        }
-      }
-    },
-    "eslint-plugin-jest": {
-      "@typescript-eslint/utils": {
-        "@typescript-eslint/typescript-estree": {
-          "minimatch": {
-            ".": "^9.0.9"
-          }
-        }
-      }
-    },
     "filelist": {
       "brace-expansion": "^1.1.21"
     },
