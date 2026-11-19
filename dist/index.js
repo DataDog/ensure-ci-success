@@ -112560,6 +112560,7 @@ class CheckReport {
     octokit;
     items = [];
     workflowRunOrigins = new Map();
+    workflowJobIds = new Map();
     containsFailure = false;
     stillRunning = false;
     shouldRetry = true;
@@ -112579,6 +112580,8 @@ class CheckReport {
     }
     async fill() {
         this.items.length = 0; // Clear the array
+        // A new poll may observe reruns or recover from a failed lookup.
+        this.workflowJobIds.clear();
         const checkSuites = await this.octokit.paginate(this.octokit.rest.checks.listSuitesForRef, {
             owner: this.owner,
             repo: this.repo,
@@ -112711,21 +112714,26 @@ class CheckReport {
         if (!runId) {
             return null;
         }
-        try {
-            // Check IDs and the IDs in job URLs are not necessarily Actions job IDs.
-            const jobs = await this.octokit.paginate(this.octokit.rest.actions.listJobsForWorkflowRun, {
-                owner: this.owner,
-                repo: this.repo,
-                run_id: Number(runId),
-                per_page: 100,
-            });
-            const job = jobs.find(job => job.check_run_url === check.url);
-            return job ? `gh run rerun ${runId} --repo ${this.owner}/${this.repo} --job ${job.id}` : null;
+        if (!this.workflowJobIds.has(runId)) {
+            try {
+                // Check IDs and the IDs in job URLs are not necessarily Actions job IDs.
+                const jobs = await this.octokit.paginate(this.octokit.rest.actions.listJobsForWorkflowRun, {
+                    owner: this.owner,
+                    repo: this.repo,
+                    run_id: Number(runId),
+                    per_page: 100,
+                });
+                this.workflowJobIds.set(runId, new Map(jobs.map(job => [job.check_run_url, job.id])));
+            }
+            catch (error) {
+                coreExports.debug(`Could not resolve a rerun command for check ${check.id}: ${error}`);
+                this.workflowJobIds.set(runId, null);
+            }
         }
-        catch (error) {
-            coreExports.debug(`Could not resolve a rerun command for check ${check.id}: ${error}`);
-            return null;
-        }
+        const jobId = this.workflowJobIds.get(runId)?.get(check.url);
+        return jobId === undefined
+            ? null
+            : `gh run rerun ${runId} --repo ${this.owner}/${this.repo} --job ${jobId}`;
     }
     async getAllCombinedStatuses() {
         const allStatuses = [];

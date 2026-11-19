@@ -218,6 +218,86 @@ describe('ensure-ci-success functional test', () => {
     }
   );
 
+  it.each([200, 403])(
+    'shares job lookups within each poll and refreshes after an initial %s response',
+    async code => {
+      mockCore.mockInput('max-retries', '2');
+      const first = [
+        getCheckRun({ id: 42, name: 'actionlint', status: 'in_progress' }),
+        getCheckRun({ id: 43, name: 'tests', status: 'in_progress' }),
+      ];
+      const second = [
+        getCheckRun({ id: 44, name: 'actionlint', status: 'in_progress' }),
+        getCheckRun({ id: 45, name: 'tests', status: 'in_progress' }),
+      ];
+      const pending = getCheckRun({
+        id: 46,
+        name: 'pending',
+        status: 'in_progress',
+        conclusion: null,
+        completed_at: null,
+      });
+      mockGithub()
+        .setupContextWithPullRequest()
+        .addActionRun()
+        .addCheckSuite({ times: 2 })
+        .addCheckRuns([...first, pending])
+        .addCheckRuns([
+          ...second,
+          {
+            ...pending,
+            status: 'completed',
+            conclusion: 'success',
+            completed_at: '2024-05-12T00:05:00Z',
+          },
+        ])
+        .addEmptyCommitStatuses({ times: 2 });
+
+      const api = nock('https://api.github.com');
+      for (const [poll, checks] of [first, second].entries()) {
+        const page = api.get('/repos/octo-org/example-repo/actions/runs/123/jobs?per_page=100');
+        if (poll === 0 && code === 403) {
+          page.reply(403, { message: 'Forbidden' });
+          continue;
+        }
+        const jobs = [
+          { id: 700 + poll * 100, check_run_url: checks[0].url },
+          ...Array.from({ length: 99 }, (_, i) => ({
+            id: i,
+            check_run_url: `https://example.com/checks/${i}`,
+          })),
+          { id: 701 + poll * 100, check_run_url: checks[1].url },
+        ];
+        page.reply(
+          200,
+          { total_count: 101, jobs: jobs.slice(0, 100) },
+          {
+            link: '<https://api.github.com/repos/octo-org/example-repo/actions/runs/123/jobs?per_page=100&page=2>; rel="next"',
+          }
+        );
+        api
+          .get('/repos/octo-org/example-repo/actions/runs/123/jobs?per_page=100&page=2')
+          .reply(200, { total_count: 101, jobs: jobs.slice(100) });
+      }
+
+      await main.run();
+
+      expect(api.isDone()).toBe(true);
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(core.warning).toHaveBeenCalledTimes(4);
+      expect(core.warning).toHaveBeenNthCalledWith(3, expect.stringContaining('--job 800'));
+      expect(core.warning).toHaveBeenNthCalledWith(4, expect.stringContaining('--job 801'));
+      if (code === 200) {
+        expect(core.warning).toHaveBeenNthCalledWith(1, expect.stringContaining('--job 700'));
+        expect(core.warning).toHaveBeenNthCalledWith(2, expect.stringContaining('--job 701'));
+      }
+      const failures = mockCore.debug.mock.calls.filter(([message]) =>
+        message.includes('Could not resolve a rerun command')
+      );
+      expect(failures).toHaveLength(code === 403 ? 1 : 0);
+    }
+  );
+
   it('warns without a rerun command when the check has no workflow URL', async () => {
     const url = 'https://github.com/octo-org/example-repo/commit/abc123def456/checks/42';
     mockGithub()
