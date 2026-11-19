@@ -104,6 +104,17 @@ export class MockGitHub {
     return this;
   }
 
+  public addCheckRuns(checks: ReturnType<typeof getCheckRun>[], times = 1) {
+    this.scope
+      .get('/repos/octo-org/example-repo/check-suites/1234567890/check-runs?per_page=100')
+      .times(times)
+      .reply(200, {
+        total_count: checks.length + 1,
+        check_runs: [getCheckRun(), ...checks],
+      });
+    return this;
+  }
+
   /**
    * Simulates a commit shared by a fork PR and an in-repo PR: the suite
    * carries a failing run from the fork and a successful run from the
@@ -308,6 +319,7 @@ export function getCheckRun({
   status = 'completed',
   appSlug = 'github-actions',
   html_url = 'https://github.com/octo-org/example-repo/actions/runs/123/job/456',
+  completed_at = '2024-05-12T00:05:00Z',
 }: {
   id?: number;
   name?: string;
@@ -315,6 +327,7 @@ export function getCheckRun({
   status?: string;
   appSlug?: string;
   html_url?: string;
+  completed_at?: string | null;
 } = {}) {
   return {
     id: id,
@@ -323,8 +336,9 @@ export function getCheckRun({
     status: status,
     conclusion: conclusion,
     started_at: '2024-05-12T00:00:00Z',
-    completed_at: '2024-05-12T00:05:00Z',
+    completed_at: completed_at,
     html_url: html_url,
+    url: `https://api.github.com/repos/octo-org/example-repo/check-runs/${id}`,
     app: {
       id: 15368,
       slug: appSlug,

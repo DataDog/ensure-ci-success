@@ -40,6 +40,7 @@ export class CheckReport {
     string,
     { headRepositoryFullName: string | null; headBranch: string | null } | null
   >();
+  private workflowJobIds = new Map<string, Map<string, number> | null>();
 
   containsFailure = false;
   stillRunning = false;
@@ -71,6 +72,8 @@ export class CheckReport {
 
   async fill(): Promise<void> {
     this.items.length = 0; // Clear the array
+    // A new poll may observe reruns or recover from a failed lookup.
+    this.workflowJobIds.clear();
 
     const checkSuites = await this.octokit.paginate(this.octokit.rest.checks.listSuitesForRef, {
       owner: this.owner,
@@ -135,7 +138,15 @@ export class CheckReport {
     core.info(`Found ${statuses.length} commit statuses`);
 
     for (const check of Object.values(checkRuns)) {
-      this.items.push(SummaryRow.fromCheck(check, this.ignoredNameRegexps, this.currentJobName));
+      const row = SummaryRow.fromCheck(check, this.ignoredNameRegexps, this.currentJobName);
+      if (row.warning) {
+        const command = await this.getRerunCommand(check);
+        core.warning(
+          `${row.warning}\n${check.html_url ?? check.url}` +
+            (command ? `\nTo rerun this job if needed:\n${command}` : '')
+        );
+      }
+      this.items.push(row);
     }
 
     for (const check of Object.values(foreignCheckRuns)) {
@@ -216,6 +227,36 @@ export class CheckReport {
       this.workflowRunOrigins.set(runId, null);
       return null;
     }
+  }
+
+  private async getRerunCommand(check: CheckRunType): Promise<string | null> {
+    if (check.app?.slug !== 'github-actions') {
+      return null;
+    }
+    const runId = this.extractWorkflowRunId(check.html_url);
+    if (!runId) {
+      return null;
+    }
+
+    if (!this.workflowJobIds.has(runId)) {
+      try {
+        // Check IDs and the IDs in job URLs are not necessarily Actions job IDs.
+        const jobs = await this.octokit.paginate(this.octokit.rest.actions.listJobsForWorkflowRun, {
+          owner: this.owner,
+          repo: this.repo,
+          run_id: Number(runId),
+          per_page: 100,
+        });
+        this.workflowJobIds.set(runId, new Map(jobs.map(job => [job.check_run_url, job.id])));
+      } catch (error) {
+        core.debug(`Could not resolve a rerun command for check ${check.id}: ${error}`);
+        this.workflowJobIds.set(runId, null);
+      }
+    }
+    const jobId = this.workflowJobIds.get(runId)?.get(check.url);
+    return jobId === undefined
+      ? null
+      : `gh run rerun ${runId} --repo ${this.owner}/${this.repo} --job ${jobId}`;
   }
 
   private async getAllCombinedStatuses(): Promise<StatusType[]> {

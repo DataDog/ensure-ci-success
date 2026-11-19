@@ -112439,6 +112439,7 @@ class SummaryRow {
     start;
     duration;
     url;
+    warning;
     constructor(params) {
         this.name = params.name;
         this.source = params.source;
@@ -112447,13 +112448,17 @@ class SummaryRow {
         this.start = params.start;
         this.duration = params.duration ?? null;
         this.url = params.url ?? null;
+        this.warning = params.warning;
     }
     static fromCheck(check, ignoredNameRegexps, currentJobName, ignore = false) {
         const duration = check.started_at && check.completed_at
             ? (new Date(check.completed_at).getTime() - new Date(check.started_at).getTime()) / 1000
             : null;
         let interpreted = Interpretation.Failure;
-        const status = check.conclusion ?? check.status ?? 'unknown';
+        let status = check.conclusion ?? check.status ?? 'unknown';
+        let warning;
+        const running = check.status === 'queued' || check.status === 'in_progress';
+        const finished = Boolean(check.conclusion && check.completed_at);
         if (ignore) {
             interpreted = Interpretation.Ignored;
         }
@@ -112463,7 +112468,7 @@ class SummaryRow {
         else if (ignoredNameRegexps.some(regex => regex.test(check.name))) {
             interpreted = Interpretation.Ignored;
         }
-        else if (check.status === 'queued' || check.status === 'in_progress') {
+        else if (running && !finished) {
             interpreted = Interpretation.StillRunning;
         }
         else if (['success', 'skipped', 'neutral'].includes(check.conclusion || '')) {
@@ -112471,6 +112476,16 @@ class SummaryRow {
         }
         else {
             interpreted = Interpretation.Failure;
+        }
+        if (running &&
+            (check.conclusion || check.completed_at) &&
+            interpreted !== Interpretation.CurrentJob &&
+            interpreted !== Interpretation.Ignored) {
+            status = `status=${check.status}, conclusion=${check.conclusion}, completed_at=${check.completed_at}`;
+            warning = `${check.name} has inconsistent GitHub check state: ${status}. `;
+            warning += finished
+                ? `Using conclusion=${check.conclusion} because a completion timestamp is present.`
+                : 'Waiting for both a conclusion and a completion timestamp.';
         }
         return new SummaryRow({
             name: check.name,
@@ -112480,6 +112495,7 @@ class SummaryRow {
             duration,
             url: check.html_url ?? null,
             interpreted,
+            warning,
         });
     }
     static fromStatus(status, ignoredNameRegexps) {
@@ -112544,6 +112560,7 @@ class CheckReport {
     octokit;
     items = [];
     workflowRunOrigins = new Map();
+    workflowJobIds = new Map();
     containsFailure = false;
     stillRunning = false;
     shouldRetry = true;
@@ -112563,6 +112580,8 @@ class CheckReport {
     }
     async fill() {
         this.items.length = 0; // Clear the array
+        // A new poll may observe reruns or recover from a failed lookup.
+        this.workflowJobIds.clear();
         const checkSuites = await this.octokit.paginate(this.octokit.rest.checks.listSuitesForRef, {
             owner: this.owner,
             repo: this.repo,
@@ -112617,7 +112636,13 @@ class CheckReport {
         const statuses = await this.getAllCombinedStatuses();
         coreExports.info(`Found ${statuses.length} commit statuses`);
         for (const check of Object.values(checkRuns)) {
-            this.items.push(SummaryRow.fromCheck(check, this.ignoredNameRegexps, this.currentJobName));
+            const row = SummaryRow.fromCheck(check, this.ignoredNameRegexps, this.currentJobName);
+            if (row.warning) {
+                const command = await this.getRerunCommand(check);
+                coreExports.warning(`${row.warning}\n${check.html_url ?? check.url}` +
+                    (command ? `\nTo rerun this job if needed:\n${command}` : ''));
+            }
+            this.items.push(row);
         }
         for (const check of Object.values(foreignCheckRuns)) {
             coreExports.info(`* 🙈 Ignoring check run from another pull request: ${check.name} (${check.html_url})`);
@@ -112680,6 +112705,35 @@ class CheckReport {
             this.workflowRunOrigins.set(runId, null);
             return null;
         }
+    }
+    async getRerunCommand(check) {
+        if (check.app?.slug !== 'github-actions') {
+            return null;
+        }
+        const runId = this.extractWorkflowRunId(check.html_url);
+        if (!runId) {
+            return null;
+        }
+        if (!this.workflowJobIds.has(runId)) {
+            try {
+                // Check IDs and the IDs in job URLs are not necessarily Actions job IDs.
+                const jobs = await this.octokit.paginate(this.octokit.rest.actions.listJobsForWorkflowRun, {
+                    owner: this.owner,
+                    repo: this.repo,
+                    run_id: Number(runId),
+                    per_page: 100,
+                });
+                this.workflowJobIds.set(runId, new Map(jobs.map(job => [job.check_run_url, job.id])));
+            }
+            catch (error) {
+                coreExports.debug(`Could not resolve a rerun command for check ${check.id}: ${error}`);
+                this.workflowJobIds.set(runId, null);
+            }
+        }
+        const jobId = this.workflowJobIds.get(runId)?.get(check.url);
+        return jobId === undefined
+            ? null
+            : `gh run rerun ${runId} --repo ${this.owner}/${this.repo} --job ${jobId}`;
     }
     async getAllCombinedStatuses() {
         const allStatuses = [];

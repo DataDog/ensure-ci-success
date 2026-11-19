@@ -76,6 +76,17 @@ steps:
 - Don't use the same name for another job (for the same reason)
 - If a job starts **after** the current job has already completed, it will not be processed. The `initial-delay-seconds` parameter helps reduce the likelihood of this issue but does not eliminate it entirely. You can also add a long-running job as a dependency for the job performing this action — just remember to include `if: always()` to ensure it isn't skipped. In all cases, make sure to carefully read the documentation about [implementation strategies](docs/implementation.md).
 
+### Inconsistent check state
+
+GitHub can report a check as `queued` or `in_progress` even though it has a
+`conclusion` and `completed_at`. The action warns with all three fields and the
+check link, then uses the conclusion: successful checks pass, and failed checks
+still fail. If either completion field is missing, the action keeps waiting.
+
+For GitHub Actions checks, the warning also includes a `gh run rerun` command
+when the corresponding job can be resolved. This lookup needs `actions: read`;
+if it fails, the warning still includes the check link.
+
 ### Shadow PRs sharing a head commit
 
 Check runs are enumerated per **commit**, not per pull request. When a fork PR and an in-repo
