@@ -2,7 +2,7 @@ import { jest } from '@jest/globals';
 import nock from 'nock';
 
 import { core, mockCore } from './mocks/actions-core';
-import { mockGithub } from './mocks/github';
+import { getCheckRun, mockGithub } from './mocks/github';
 
 const realSetTimeOut = global.setTimeout;
 
@@ -92,6 +92,164 @@ describe('ensure-ci-success functional test', () => {
     await main.run();
 
     expect(core.setFailed).toHaveBeenCalled();
+  });
+
+  it.each(['queued', 'in_progress'])(
+    'honours a completed success with stale %s status and reports how to rerun it',
+    async status => {
+      const check = getCheckRun({ id: 42, name: 'actionlint', status });
+      mockGithub()
+        .setupContextWithPullRequest()
+        .addActionRun()
+        .addCheckSuite()
+        .addCheckRuns([check])
+        .addEmptyCommitStatuses();
+      const jobs = nock('https://api.github.com')
+        .get('/repos/octo-org/example-repo/actions/runs/123/jobs?per_page=100')
+        .reply(200, {
+          total_count: 2,
+          jobs: [
+            { id: 456, check_run_url: 'https://api.github.com/repos/other/repo/check-runs/42' },
+            { id: 789, check_run_url: check.url },
+          ],
+        });
+
+      await main.run();
+
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(jobs.isDone()).toBe(true);
+      expect(core.warning).toHaveBeenCalledWith(
+        `actionlint has inconsistent GitHub check state: status=${status}, ` +
+          'conclusion=success, completed_at=2024-05-12T00:05:00Z. ' +
+          'Using conclusion=success because a completion timestamp is present.\n' +
+          `${check.html_url}\nTo rerun this job if needed:\n` +
+          'gh run rerun 123 --repo octo-org/example-repo --job 789'
+      );
+      expect(core.info).toHaveBeenCalledWith(
+        '✅ All CI checks and statuses passed or were skipped.'
+      );
+    }
+  );
+
+  it.each(['failure', 'cancelled', 'timed_out', 'action_required', 'stale'])(
+    'fails on a completed %s conclusion despite an in-progress status',
+    async conclusion => {
+      mockGithub()
+        .setupContextWithPullRequest()
+        .addActionRun()
+        .addCheckSuite()
+        .addCheckRuns([
+          getCheckRun({
+            name: 'external-ci',
+            status: 'in_progress',
+            conclusion,
+            appSlug: 'circleci',
+          }),
+        ])
+        .addEmptyCommitStatuses();
+
+      await main.run();
+
+      expect(core.setFailed).toHaveBeenCalledWith(
+        '❌ Some CI checks or statuses failed, please check the summary table.'
+      );
+      expect(core.warning).toHaveBeenCalledWith(
+        expect.stringContaining(`Using conclusion=${conclusion}`)
+      );
+      expect(core.warning).not.toHaveBeenCalledWith(expect.stringContaining('gh run rerun'));
+    }
+  );
+
+  it.each([
+    { conclusion: 'success', completed_at: null },
+    { conclusion: null, completed_at: '2024-05-12T00:05:00Z' },
+    { conclusion: null, completed_at: null },
+  ])('keeps waiting with incomplete completion fields: %j', async fields => {
+    mockCore.mockInput('max-retries', '1');
+    mockGithub()
+      .setupContextWithPullRequest()
+      .addActionRun()
+      .addCheckSuite()
+      .addCheckRuns([
+        getCheckRun({ name: 'external-ci', status: 'in_progress', appSlug: 'circleci', ...fields }),
+      ])
+      .addEmptyCommitStatuses();
+
+    await main.run();
+
+    expect(core.setFailed).toHaveBeenCalledWith(
+      '❌ Some checks are still running, but we are not retrying anymore.'
+    );
+    if (fields.conclusion || fields.completed_at) {
+      expect(core.warning).toHaveBeenCalledWith(
+        expect.stringContaining('Waiting for both a conclusion and a completion timestamp.')
+      );
+      expect(core.info).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `status=in_progress, conclusion=${fields.conclusion}, completed_at=${fields.completed_at}`
+        )
+      );
+    } else {
+      expect(core.warning).not.toHaveBeenCalled();
+    }
+  });
+
+  it.each([403, 200])(
+    'preserves the result when the job lookup returns %s without a job',
+    async code => {
+      mockGithub()
+        .setupContextWithPullRequest()
+        .addActionRun()
+        .addCheckSuite()
+        .addCheckRuns([getCheckRun({ name: 'actionlint', status: 'in_progress' })])
+        .addEmptyCommitStatuses();
+      const jobs = nock('https://api.github.com')
+        .get('/repos/octo-org/example-repo/actions/runs/123/jobs?per_page=100')
+        .reply(code, code === 200 ? { total_count: 0, jobs: [] } : { message: 'Forbidden' });
+
+      await main.run();
+
+      expect(jobs.isDone()).toBe(true);
+      expect(core.setFailed).not.toHaveBeenCalled();
+      expect(core.warning).toHaveBeenCalledWith(
+        expect.stringContaining('Using conclusion=success')
+      );
+      expect(core.warning).not.toHaveBeenCalledWith(expect.stringContaining('gh run rerun'));
+    }
+  );
+
+  it('warns without a rerun command when the check has no workflow URL', async () => {
+    const url = 'https://github.com/octo-org/example-repo/commit/abc123def456/checks/42';
+    mockGithub()
+      .setupContextWithPullRequest()
+      .addActionRun()
+      .addCheckSuite()
+      .addCheckRuns([getCheckRun({ name: 'actionlint', status: 'in_progress', html_url: url })])
+      .addEmptyCommitStatuses();
+
+    await main.run();
+
+    expect(core.setFailed).not.toHaveBeenCalled();
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining(url));
+    expect(core.warning).not.toHaveBeenCalledWith(expect.stringContaining('gh run rerun'));
+  });
+
+  it('does not warn about inconsistent state for the current or ignored checks', async () => {
+    mockCore.mockInput('ignored-name-patterns', 'ignored-job');
+    mockGithub()
+      .setupContextWithPullRequest()
+      .addActionRun()
+      .addCheckSuite()
+      .addCheckRuns([
+        getCheckRun({ id: 2, status: 'in_progress' }),
+        getCheckRun({ name: 'ignored-job', status: 'in_progress', conclusion: 'failure' }),
+      ])
+      .addEmptyCommitStatuses();
+
+    await main.run();
+
+    expect(core.setFailed).not.toHaveBeenCalled();
+    expect(core.warning).not.toHaveBeenCalled();
   });
 
   it('Read input', async () => {

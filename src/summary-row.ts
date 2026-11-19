@@ -16,6 +16,7 @@ export class SummaryRow {
   start?: string;
   duration: number | null;
   url: string | null;
+  warning?: string;
 
   constructor(params: {
     name: string;
@@ -25,6 +26,7 @@ export class SummaryRow {
     start?: string;
     duration?: number | null;
     url?: string | null;
+    warning?: string;
   }) {
     this.name = params.name;
     this.source = params.source;
@@ -33,6 +35,7 @@ export class SummaryRow {
     this.start = params.start;
     this.duration = params.duration ?? null;
     this.url = params.url ?? null;
+    this.warning = params.warning;
   }
 
   static fromCheck(
@@ -47,7 +50,10 @@ export class SummaryRow {
         : null;
 
     let interpreted: Interpretation = Interpretation.Failure;
-    const status = check.conclusion ?? check.status ?? 'unknown';
+    let status: string = check.conclusion ?? check.status ?? 'unknown';
+    let warning: string | undefined;
+    const running = check.status === 'queued' || check.status === 'in_progress';
+    const finished = Boolean(check.conclusion && check.completed_at);
 
     if (ignore) {
       interpreted = Interpretation.Ignored;
@@ -55,12 +61,25 @@ export class SummaryRow {
       interpreted = Interpretation.CurrentJob;
     } else if (ignoredNameRegexps.some(regex => regex.test(check.name))) {
       interpreted = Interpretation.Ignored;
-    } else if (check.status === 'queued' || check.status === 'in_progress') {
+    } else if (running && !finished) {
       interpreted = Interpretation.StillRunning;
     } else if (['success', 'skipped', 'neutral'].includes(check.conclusion || '')) {
       interpreted = Interpretation.Success;
     } else {
       interpreted = Interpretation.Failure;
+    }
+
+    if (
+      running &&
+      (check.conclusion || check.completed_at) &&
+      interpreted !== Interpretation.CurrentJob &&
+      interpreted !== Interpretation.Ignored
+    ) {
+      status = `status=${check.status}, conclusion=${check.conclusion}, completed_at=${check.completed_at}`;
+      warning = `${check.name} has inconsistent GitHub check state: ${status}. `;
+      warning += finished
+        ? `Using conclusion=${check.conclusion} because a completion timestamp is present.`
+        : 'Waiting for both a conclusion and a completion timestamp.';
     }
 
     return new SummaryRow({
@@ -71,6 +90,7 @@ export class SummaryRow {
       duration,
       url: check.html_url ?? null,
       interpreted,
+      warning,
     });
   }
 
